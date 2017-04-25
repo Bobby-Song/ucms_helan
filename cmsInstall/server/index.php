@@ -66,7 +66,7 @@
             $config_content.= "'LOAD_EXT_CONFIG' => 'errCode',\n";
             $config_content.= "\n";
             $config_content.= "/**---------------- 以下配置为CMS内部自用  -----------------*/\n";
-            $config_content.= "'REGION_NAME' => '杭州市',\n";
+            $config_content.= "'REGION_NAME' => '银川市',\n";
             $config_content.= "'SERVER_IP' => '".$_POST['PORTAL_HOST_IP']."',\n";
             $config_content.= "'SERVER_PORT' => '".$_POST['PORTAL_HOST_PORT']."',\n";
 			$config_content.= ");\n";
@@ -139,7 +139,7 @@
 							mysqli_query( $conn , $sql );
 						}
 						
-						$arr['message'] = "系统安装成功!请牵记系统总监密码，3秒后进入管理界面";
+						$arr['message'] = "系统安装成功!请牢记系统总监密码，3秒后进入管理界面";
 						$arr['prompt'] = 1;
 						echo json_encode( $arr );						
 					}
