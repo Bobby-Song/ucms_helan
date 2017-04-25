@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta content="MSHTML 6.00.6000.16674" name="GENERATOR" />
+        <title>CMS用户登录</title>
+		<link rel="stylesheet" type="text/css" href="{$Think.const.CF_PATH}themes/default_bak/easyui.css">
+		<link rel="stylesheet" type="text/css" href="{$Think.const.CF_PATH}themes/icon.css">
+		<link rel="stylesheet" type="text/css" href="{$Think.const.CSS_PATH}login.css">
+		<script type="text/javascript" src="{$Think.const.CF_PATH}jquery-1.7.2.min.js" charset="utf-8"></script>
+		<script type="text/javascript" src="{$Think.const.CF_PATH}jquery.easyui.min.js" charset="utf-8"></script>
+		<script type="text/javascript" src="{$Think.const.CF_PATH}locale/easyui-lang-zh_CN.js" charset="utf-8"></script>
+		<script type="text/javascript" src="{$Think.const.JS_PATH}common.js" charset="utf-8"></script>
+		<script>
+			window.onkeydown = function(event){
+				if(event.keyCode == 13){
+					loginSystem();
+				}
+			}
+		
+			$(function(){
+				$("#getcode_char").attr("src",'__CONTROLLER__/creatCodeChar?' + Math.random());
+				$("#getcode_char").bind("click", createCaptcha);				
+				$("#Button1").bind("click", loginSystem);				
+				$("#resets").click(function(){
+					$('#form1').get(0).reset();
+				});
+			});
+			
+			function createCaptcha(){
+				$("#getcode_char").attr("src",'__CONTROLLER__/creatCodeChar?' + Math.random());
+			}			
+			function loginSystem(){
+			
+				var code_char = $("#code_char").val();
+				var user_name = $("#user_name").val();
+				var user_pass = $("#user_pass").val();
+				
+				if(user_name == '' || user_pass == ''){
+					return;
+				}
+				
+				if(code_char == ''){
+					return;
+				}
+				
+				$.post( "__CONTROLLER__/userLogin" , 
+				{code_char: code_char, user_name: user_name, user_pass: user_pass} , 
+				function(result){	
+				    if( result.error == 1 ){
+						createCaptcha();
+						$.messager.show({
+							title:result.title , 
+							msg:result.msg
+						});
+					}else{
+						location.href = result.url;
+					}	
+				},'json');
+			}
+	</script>
+    </head>
+	<body style="background:url('{$Think.const.IMAGES_PATH}bg.jpg') repeat-x top center #ededed;">
+	<form id="Form2" name="Form2">
+		<table cellspacing="0" cellpadding="0" align="center" style="width:521px; height:327px;background:url({$Think.const.IMAGES_PATH}loginbg.png); color:#727272; font-size:#727272; margin:auto; margin-top:212px;">
+			<tbody><tr>
+				<td valign="middle" height="99" align="center">
+					<img style="width: 337px;height: 57px;overflow:hidden;border:none; display:block; margin-top:15px; text-align:center;" src="{$Think.const.IMAGES_PATH}login_logo.png">
+				</td>
+			</tr>
+			<tr>
+				<td height="201" align="center"><table width="328" height="180">
+					<tbody><tr>
+						<td width="131">管理员帐号：</td>
+						<td colspan="2"><input type="text" style=" width:216px; height:24px; padding:0; line-height:24px; background:url({$Think.const.IMAGES_PATH}txtbg.png) no-repeat; border:none; padding:0px 3px;" name="user_name" id="user_name"></td>
+					</tr>
+					<tr>
+						<td>管理员密码：</td>
+						<td colspan="2"><input type="password" style=" width:216px; line-height:24px; padding:0; height:24px; background:url({$Think.const.IMAGES_PATH}txtbg.png) no-repeat; border:none; padding:0px 3px;" name="user_pass" id="user_pass"></td>
+					</tr>
+					<tr>
+						<td>验证码1：</td>
+						<td colspan="2">
+							<input type="text" style=" width:120px; line-height:24px; padding:0; height:24px; background:url({$Think.const.IMAGES_PATH}txtbg.png) no-repeat; border:none; padding:0px 3px;float: left" name="code_char" id="code_char">
+								<img height="25" style="margin-left: 10px" src="" id="getcode_char">
+						</td>
+					</tr>
+					<tr>
+						<td align="center" colspan="3"><label class="error">&nbsp;</label></td>
+					</tr>
+					<tr>
+						<td>&nbsp;</td>
+						<td align="left" colspan="2">
+							<input type="button" style="" class="button" value="进入管理中心" data-valid="true" id="Button1">
+						</td>
+					</tr>
+					<tr>
+						<td align="center" colspan="3"></td>
+					</tr>
+				</tbody></table></td>
+			</tr>
+			<tr>
+				<td align="center" style="padding-left: 50px">&nbsp;</td>
+			</tr>
+		</tbody></table>
+	</form>
+	</body>
+</html>

@@ -1,0 +1,107 @@
+<table id="propertyGrid{$suffix}"></table>
+<div id="dialog{$suffix}">
+	<table class='browser'>
+		<tr id="showType{$suffix}">
+			<td class='label'>类别</td>
+			<td>
+				<select size="1" name="type{$suffix}" class="select" id="type{$suffix}" style="width:150px;">
+				</select>
+			</td>
+		</tr>		
+		<tr>
+			<td class='label' id="showtext{$suffix}"></td>
+			<td>
+				<input type='text' id='text{$suffix}' name='text{$suffix}' class='myInp'>
+			</td>
+		</tr>
+		<tr id="showValue{$suffix}">
+			<td class='label'>参数值</td>
+			<td>
+				<input type='text' id='value{$suffix}' name='value{$suffix}' class='myInp'>
+			</td>
+		</tr>
+	</table>
+</div>
+<script>
+	var dialogSelector = $('#dialog{$suffix}');
+	var selectorpropertyGrid = $('#propertyGrid{$suffix}');
+	$('#propertyGrid{$suffix}').propertygrid({
+		fit:true,
+		height:'auto',
+		url:'__MODULE__/Index/parameterShow',
+		showGroup:true,
+		scrollbarSize:0,
+		toolbar:[
+			{ text : '新增类别' , iconCls : 'icon-add' , handler:function(){
+				parameterEdit( '新增类别' , 'type_ext' );
+			}},'-',
+			{ text : '新增参数' , iconCls : 'icon-add' , handler:function(){
+				parameterEdit( '新增参数' , 'type_param' );
+			}},'-',
+			{ text : '删除' , iconCls : 'icon-remove' , handler:function(){
+			}},'-',
+			{ text : '修改' , iconCls : 'icon-edit' , handler:function(){
+			}}
+		]	
+	});
+	
+	$('#type{$suffix}').combobox({
+		url : '__MODULE__/Index/typeExtData',
+		valueField : 'id',	
+		textField : 'text',
+		editable : false
+	});
+	
+	function parameterEdit( _title , _flag ){	
+		$('#text{$suffix}').attr( 'value' , '' );
+		$('#value{$suffix}').attr( 'value' , '' );
+		if( _flag == 'type_ext' ){
+			$('#showtext{$suffix}').html('类别');
+			$('#showValue{$suffix}').hide();
+			$('#showType{$suffix}').hide();
+			
+		}else if( _flag == 'type_param' ){
+			$('#showtext{$suffix}').html('参数名称');
+			$('#showValue{$suffix}').show();
+			$('#showType{$suffix}').show();
+		} 
+		var buttons = [
+			{text:'提交',id:'regSubmit',handler:function(){
+				var text = $('#text{$suffix}').val();
+				var value = $('#value{$suffix}').val();
+				var type_id = $('#type{$suffix}').combobox( 'getValue' );
+				if( text == '' || ( _flag == 'type_param' && ( value=='' || type_id == '' ) ) ){
+					$.messager.show({
+						title:"系统提示" , 
+						msg:"数据为空，不可提交"
+					});							
+					return;	
+				}				
+				dialogSelector.dialog('close');
+				var data = { text : text , value : value , flag : _flag , type_id : type_id };
+				sendData( '__MODULE__/Index/parameterEdit' , data , selectorpropertyGrid );
+			}},
+			{text:'重置',id:'regSet',handler:function(){
+				
+			}}
+		];
+		createDiaLog( dialogSelector , _title , 420 , 200 , '' , buttons );
+		dialogSelector.dialog('open');
+	}
+	
+	function sendData( _controller , _data , _selector ){
+		$('#Loadings').show();
+		$.post( _controller , _data , function( result ){
+			$('#Loadings').hide();
+			$.messager.show({
+				title:result.title , 
+				msg:result.message
+			});
+			if ( result.error == 0 ){
+				_selector.datagrid( 'reload');
+				$('#type{$suffix}').combobox( 'reload' );
+			}
+			
+		},'json');	
+	}
+</script>

@@ -1,0 +1,165 @@
+<table id='dataGrid{$suffix}'></table>
+<div id="toolbar{$suffix}" style="padding:2px 0">
+    <table cellpadding="0" cellspacing="0" style="width:100%">
+        <tr>
+            <td style="padding-left:2px">
+                <a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onClick="appAdd()">新增</a>
+                <span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onClick="appDel()">删除</a>
+                <span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-remove" plain="true" onClick="appUpdate()">修改</a>
+                <span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-application-view-list" plain="true" onclick="verManager()">版本管理</a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="dialog{$suffix}">
+    <table class='browser'>
+        <tr>
+            <td class='label'>应用包名称</td>
+            <td>
+                <input type='text' id='name{$suffix}' name='name{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+                
+            </td>
+        </tr>
+        <tr>
+            <td class='label'>应用包描述</td>
+            <td>
+                <input id="desc{$suffix}" type="text" name="desc{$suffix}" />
+            </td>
+        </tr>
+    </table>
+</div> 
+
+<script>
+    var gridData = {};
+    var selectorDataGrid = $('#dataGrid{$suffix}'); //datagrid 组件选择器
+    var pageSize=18; //datagrid 默认显示行数
+    var toolbar = "#toolbar{$suffix}"; //工具条
+    var dataGridUrl = '__MODULE__/Index/getAppList';
+    var dialogSelector = $( '#dialog{$suffix}' );
+    var idField = "id";
+    var columns=[[
+        {field:'id',hidden:true},
+        {field:'app_name',title:'应用包名称',width:20},
+        {field:'app_time',title:'创建时间',width:20},
+        {field:'app_desc',title:'介绍',width:60}
+    ]];
+    
+    creatDataGrid( selectorDataGrid , pageSize , toolbar , dataGridUrl , idField , columns );
+    
+    function appAdd(){
+	    $('#name{$suffix}').val('');
+        $('#desc{$suffix}').val('');
+        
+	    var width = 540;
+        var height = 270;
+        var iconCls = "icon-add";
+        var title = '应用包新增';
+        var buttons =[
+            {text:'提交',id:'regSubmit',handler:function(){                
+                $.ajax({
+                    "url": "__MODULE__/Index/addApp",
+                    "data": {
+                        "app_name" : $('#name{$suffix}').val() , 
+                        "app_desc" : $('#desc{$suffix}').val()
+                    },
+                    "type": "post",
+                    "dataType": "json",
+                    success: function(ret){
+                	    msgTips(ret.code, ret.desc);
+                	    if(ret.code == 0){
+                		    selectorDataGrid.datagrid('reload');
+                	    }
+                    }
+                });
+                
+                dialogSelector.dialog('close');
+            }},
+            {text:'重置',id:'regSet',handler:function(){
+                $('#name{$suffix}').attr( 'value' , '' );
+            }}
+        ];
+        
+	    createDiaLog( dialogSelector , title , width , height , iconCls , buttons);
+        dialogSelector.dialog('open');
+    }
+    
+    function appDel(){
+        var sel = selectorDataGrid.datagrid("getSelections");
+        if(sel.length != 1){
+            $.messager.alert("温馨提示", "请选择一条数据进行操作");
+            return;
+        }
+        
+        $.messager.confirm("警告", "删除该包将会导致其所有子版本丢失，是否继续删除选中的应用包？", function(b){
+            if(b){
+                $.ajax({
+                    url: "__MODULE__/Index/delApp/id/"+sel[0].id,
+                    dataType: 'json',
+                    success: function(ret){
+                        msgTips(ret.code, ret.desc);
+                        if(ret.code == 0){
+                            selectorDataGrid.datagrid('reload');
+                        }
+                    }
+                });
+            }
+        })
+    }
+    
+    function appUpdate(){        
+        var sel = selectorDataGrid.datagrid("getSelections");
+        if(sel.length != 1){
+            $.messager.alert("温馨提示", "请选择一条数据进行操作");
+            return;
+        }
+        
+	    var width = 540;
+        var height = 270;
+        var iconCls = "icon-update";
+        var title = '应用包更新';
+        var buttons =[
+            {text:'提交',id:'regSubmit',handler:function(){                
+                $.ajax({
+                    "url": "__MODULE__/Index/updateApp",
+                    "type": "post",
+                    "data": {
+                	    "id": sel[0].id,
+                        "app_name" : $('#name{$suffix}').val(), 
+                        "app_desc" : $('#desc{$suffix}').val()
+                    },
+                    "dataType": "json",
+                    success: function(ret){
+                        msgTips(ret.code, ret.desc);
+                        if(ret.code == 0){
+                            selectorDataGrid.datagrid('reload');
+                        }
+                    }
+                });
+                
+                dialogSelector.dialog('close');
+            }},
+            {text:'重置',id:'regSet',handler:function(){
+                $('#name{$suffix}').attr( 'value' , '' );
+            }}
+        ];
+
+        $('#name{$suffix}').val(sel[0].app_name);
+        $('#desc{$suffix}').val(sel[0].app_desc);
+        createDiaLog( dialogSelector , title , width , height , iconCls , buttons);
+        dialogSelector.dialog('open');
+    }
+    
+    function verManager(){
+	    var sel = selectorDataGrid.datagrid("getSelections");
+        if(sel.length != 1){
+            $.messager.alert("温馨提示", "请选择一条数据进行操作");
+            return;
+        }
+        
+	    createDeskTopTab( '版本管理' , 'versionManager/id/'+sel[0].id );
+    }
+</script>

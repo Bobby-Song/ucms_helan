@@ -1,0 +1,125 @@
+<table id='regionData{$suffix}'></table>
+<div id="regionMenu{$suffix}" class="easyui-menu" style="width:130px;">
+	<div id='insert{$suffix}' iconCls="icon-add" onclick="regionShunt( 'IP段方式分流设定' )">IP段方式分流设定</div>
+</div>
+<div id="regDialog{$suffix}">
+	<table class='browser'>
+		<tr>
+			<td class='label'>起始IP</td>
+			<td>
+				<input type='text' id='begin_ip{$suffix}' name='from{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+			</td>
+		</tr>
+		<tr>
+			<td class='label'>终止IP</td>
+			<td>
+				<input type='text' id='end_ip{$suffix}' name='to{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+			</td>
+		</tr>
+	</table>
+</div>
+<script>
+	$('#regionData{$suffix}').treegrid({
+		fit:true,
+		idField:'id',//数据表格要有主键	
+		treeField:'text',//treegrid 树形结构主键 text
+		animate:true,//动画效果
+		fitColumns:true,//自动扩大或缩小列的尺寸以适应表格的宽度并且防止水平滚动
+		rownumbers:false,//显示行号的列
+		url:'__MODULE__/Region/showRerionGridTree',	
+		columns:[[
+			{field:'text',title:'区域名称　[请右键点击节点进行操作管理]',width:150} ,
+			{field:'id',title:'区域ID',width:40} ,
+			{field:'code',title:'区域编码',width:120} ,
+			{field:'begin_ip',title:'起始IP',width:120,formatter:function(v,d,i){
+				if( d.level == 4 ){
+					if( v == 0 ) return '未设定';
+					else return _int2iP( v );
+				}else{
+					return '';
+				}
+			}} ,
+			{field:'end_ip',title:'终止IP',width:120,formatter:function(v,d,i){
+				if( d.level == 4 ){
+					if( v == 0 ) return '未设定';
+					else return _int2iP( v );
+				}else{
+					return '';
+				}
+			}}
+		]],
+		onContextMenu: function(e,row){
+			e.preventDefault();					//屏蔽浏览器的菜单
+			$(this).treegrid('unselectAll');	//清除所有选中项
+			$(this).treegrid('select', row.id);//选中状态
+			if( row.level != 4 ){
+				$.messager.show({
+					title : "系统提示", 
+					msg : "请选择社区/行政村"
+				});
+				return;
+			}		
+			$('#regionMenu{$suffix}').menu('show', {
+				left: e.pageX,
+				top: e.pageY
+			});
+		}
+	});
+	
+	function regionShunt( _title ){
+		var gridNode = $('#regionData{$suffix}').treegrid('getSelected');
+		var selector = $('#regDialog{$suffix}');
+		var title = gridNode.text + _title;
+		var width = 400;
+		var height = 180;
+		var iconCls = 'icon-add';
+		var buttons = [
+			{text:'设定',id:'regSubmit',handler:function(){
+				var end_ip = $('#end_ip{$suffix}').val();
+				var begin_ip = $('#begin_ip{$suffix}').val();
+				if( !checkSubmitIp( end_ip ) || !checkSubmitIp( begin_ip ) ){
+					$.messager.show({
+						title: "系统提示", 
+						msg: "请输入正确的IP"
+					});
+					return;
+				}
+				end_ip = _ip2int( end_ip );
+				begin_ip = _ip2int( begin_ip );
+				if( end_ip <= begin_ip ){
+					$.messager.show({
+						title: "系统提示", 
+						msg: "终止IP不能小于等于起始IP"
+					});
+					return;
+				}
+				var data = { id : gridNode.id , end_ip : end_ip , begin_ip : begin_ip };
+				sendData( '__MODULE__/Region/regIpShunt' , data );
+			}},
+			{text:'重置',id:'regSet',handler:function(){
+				
+			}}
+		];
+		createDiaLog( selector , title , width , height , iconCls , buttons);
+		$('#begin_ip{$suffix}').attr( 'value' , '' );
+		$('#end_ip{$suffix}').attr( 'value' , '' );
+		if( gridNode.begin_ip != 0 ){
+			$('#begin_ip{$suffix}').attr( 'value' , _int2iP( gridNode.begin_ip ) );
+			$('#end_ip{$suffix}').attr( 'value' , _int2iP( gridNode.end_ip ) );
+		}
+		selector.dialog('open');
+	}
+	
+	function sendData( _controller , _data ){
+		$.post( _controller , _data , function(result){	
+			$.messager.show({
+				title:result.title , 
+				msg:result.message
+			});
+			if ( result.error == 0 ){
+				$('#regionData{$suffix}').treegrid( 'reload');
+				$('#regDialog{$suffix}').dialog( 'close' );
+			}
+		},'json');	
+	}
+</script>

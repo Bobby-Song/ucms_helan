@@ -1,0 +1,18 @@
+<?php
+header("content-type:text/html;charset=utf-8");
+// 检测PHP环境
+if(version_compare(PHP_VERSION,'5.3.0','<'))  die('require PHP > 5.3.0 !');
+define('APP_DEBUG',True);// 开启调试模式 建议开发阶段开启 部署阶段注释或者设为false
+define("SITE_URL",'{SERVER_ADDR}');// CMS站点路径
+define("WEB_PATH",'../webRoot/');//WEB站点路径
+
+define("CSS_URL",SITE_URL."wasuCMS/public/css/");//定义CSS路径
+define("IMAGES_URL",SITE_URL."wasuCMS/public/images/");//定义images路径
+define("CF_URL",SITE_URL."wasuCMS/public/clientFramework/");//定义富客户端框架路径
+define("HIGHCHARTS_URL",SITE_URL."wasuCMS/public/highcharts/");//定义Highcharts路径
+define("JSON_CACHE_PATH", SITE_URL.'wasuCMS/public/jsonCache/');//定义josn路径
+define("MOVIES_PATH", '../video/');//定义视频上传相对路径
+define("IMAGE_PATH", WEB_PATH . 'image/');//定义图片上传相对路径
+define("IMAGE_ABS_PATH", SITE_URL . WEB_PATH . 'image/');//定义图片上传绝对路径
+
+require '../ThinkPHP/ThinkPHP.php';

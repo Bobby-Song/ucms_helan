@@ -1,0 +1,102 @@
+<div class="easyui-panel" fit=true border=false>
+    <div class="easyui-layout" fit=true>
+        <div region='west' collapsible=false style="width:200px;padding-right:3px;" border=false>
+            <div class='easyui-panel' fit=true title="APP栏目">
+                <ul id="appNode{$suffix}"></ul>
+            </div>
+        </div>
+        <div region='center' border=false>
+            <div id="showTime" name="showTime"  class='easyui-panel' fit=true title="信息管理" style="padding:3px;">
+                <table id='depInsDataGrid'></table>
+                <form id="attenceSearchFf">
+                    <table class='browser'>
+	                    <tr id="picsShow{$suffix}">
+	                        <td class='label'>APP端图片上传</td>
+	                        <td id="photo{$suffix}"></td>
+	                        <td id='oldshowImg{$suffix}' class='label' style="text-align:center;border:1px solid;"></td>
+                            <td id='showImg{$suffix}' class='label' style="text-align:center;border:1px solid;"></td>
+	                    </tr>
+                        <tr id="tvPicsShow{$suffix}">
+                            <td class='label'>TV端图片上传</td>
+                            <td id="tvPhoto{$suffix}"></td>
+                            <td id='tvOldshowImg{$suffix}' class='label' style="text-align:center;border:1px solid;"></td>
+                            <td id='tvShowImg{$suffix}' class='label' style="text-align:center;border:1px solid;"></td>
+                        </tr>
+	                    <tr id="picsSub{$suffix}">
+                            <td colspan="4" class='label' style="text-align:center;"><a href="#" class="easyui-linkbutton" id="submits">保存</a></td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+var nodeId = '';
+$('#appNode{$suffix}').tree({
+    lines:true,
+    animate:true,
+    url: '__CONTROLLER__/getAppNodeTree',
+    onClick:function(node){
+	    nodeId = node.attributes.node_code;
+        $("#oldshowImg{$suffix}").html('<img src="'+node.attributes.app_icon+'" style="width:40px;height:40px;"/>');
+        $("#tvOldshowImg{$suffix}").html('<img src="'+node.attributes.tv_icon+'" style="width:40px;height:40px;"/>');
+    }
+});
+
+$('#photo{$suffix}').Huploadify({
+    auto: true,
+    fileTypeExts: '*.jpg;*.gif;*.GIF;*.JPG;*.png;*.PNG',
+    uploader: '__CONTROLLER__/AppNodeIconUpload?from=app',
+    fileObjName:　"Filedata",
+    onUploadStart: function(){
+	    
+    },
+    onUploadSuccess:function(result,file){
+        var obj = JSON.parse(file);
+        $('#showImg{$suffix}').html('<img src="'+obj.fileName+'" style="width:40px;height:40px;"/>');
+    },
+});
+
+$('#tvPhoto{$suffix}').Huploadify({
+    auto: true,
+    fileTypeExts: '*.jpg;*.gif;*.GIF;*.JPG;*.png;*.PNG',
+    uploader: '__CONTROLLER__/AppNodeIconUpload?from=tv',
+    fileObjName:　"Filedata",
+    onUploadStart: function(){
+
+    },
+    onUploadSuccess:function(result,file){
+        var obj = JSON.parse(file);
+        $('#tvShowImg{$suffix}').html('<img src="'+obj.fileName+'" style="width:40px;height:40px;"/>');
+    },
+});
+
+$("#submits").click(function(){
+    if(nodeId == ''){
+        $.messager.alert("温馨提示", "请选中一个栏目再行操作！");
+        return;
+    }
+
+    $.ajax({
+	    url:'__CONTROLLER__/saveAppNodeIcon',
+	    data:{"id":nodeId},
+	    dataType:"json",
+	    success: function(ret){
+		    if(ret.code == 0){
+		        var return_ret = ret.data;
+                var ret_arr = return_ret.split('___');
+			    if(ret_arr[0]){
+			        $("#oldshowImg{$suffix}").html('<img src="'+ret_arr[0]+'" style="width:40px;height:40px;"/>');
+                }
+                if(ret_arr[1]){
+                    $("#tvOldshowImg{$suffix}").html('<img src="'+ret_arr[1]+'" style="width:40px;height:40px;"/>');
+                }
+		    }
+		    msgTips(ret.code);
+		    $('#showImg{$suffix}').html('');
+		    $('#tvShowImg{$suffix}').html('');
+	    }
+    });
+});
+</script>

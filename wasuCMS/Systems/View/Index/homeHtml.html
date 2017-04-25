@@ -1,0 +1,424 @@
+<table id='datagrid{$suffix}'></table>
+<div id="equipmentManage-toolbar{$suffix}" style="padding:2px 0">
+	<table cellpadding="0" cellspacing="0" style="width:100%">
+		<tr>
+			<td style="padding-left:2px">
+				<if condition="($user_type eq 1)">
+				<a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onClick="homeEdits('新增内容',1)">新增</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onClick="homeEdits('修改内容',3)">修改</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<elseif condition="$user_type eq 3"/>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-audit" plain="true" onClick="hoemAudits('内容审核','1')">审核</a>
+				<elseif condition="$user_type eq 4"/>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-release" plain="true" onClick="hoemAudits('内容发布','2')">发布</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-online" plain="true" onClick="onOrDownLineAudit('on')">上线</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-downline" plain="true" onClick="onOrDownLineAudit('down')">下线</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				</if>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-application-form-magnify" plain="true" onClick="homePreviews()">预览</a>
+			</td>
+		</tr>
+	</table>
+</div>
+
+<div id="dialog{$suffix}">
+	<table class='browser'>
+		<tr>
+			<td class='label'>类型</td>
+			<td>
+				<select size="1" name="type{$suffix}" class="select" id="type{$suffix}" style="width:150px;">
+					<option selected="selected" value=1>首页电视</option>
+					<option value=2>首页滚动字幕</option>
+					<option value=3>公利医院首页视频</option>				
+				</select>
+			</td>
+		</tr>
+		<tr id='SERVICE_ID{$suffix}'>
+			<td class='label'>SERVICE_ID</td>
+			<td>
+				<input type='text' id='service{$suffix}' name='service{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+			</td>
+		</tr>
+		<tr id='CHANNEL{$suffix}'>
+			<td class='label'>安卓频道号</td>
+			<td>
+				<input type='text' id='channel{$suffix}' name='channel{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+			</td>
+		</tr>
+		<tr id='MARQUEE{$suffix}'>
+			<td class='label'>滚动字幕</td>
+			<td>
+				<input type='text' id='marquee{$suffix}' name='marquee{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+			</td>
+		</tr>
+		<tr id='NAME{$suffix}'>
+			<td class='label'>视频描述</td>
+			<td>
+				<input type='text' id='name{$suffix}' name='name{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+			</td>
+		</tr>
+		<tr id="videos{$suffix}">
+			<td class='label'>视频上传</td>
+			<td><a href="{$Think.const.SITE_URL}pdcms/videosUp/videosUp.htm" target=blank><img id="videosUp" src="{$Think.const.IMAGES_URL}upload_bg.png" border='0' style="cursor:pointer"></a></td>
+		</tr>
+	</table>
+</div>
+
+<div id="dialogAudit{$suffix}">
+	<table class='browser'>
+		<tr>
+			<td class='label'>类型</td>
+			<td id = 'auditType{$suffix}'></td>
+		</tr>
+		<tr>
+			<td class='label'>SERVICE_ID/滚动字幕/视频描述</td>
+			<td id = 'auditName{$suffix}'></td>
+		</tr>
+		<tr>
+			<td class='label'>安卓频道号/视频文件名</td>
+			<td id = 'auditMovies{$suffix}'></td>
+		</tr>
+		<tr>
+			<td class='label'>驳回原因</td>
+			<td><textarea id="reject{$suffix}" name="reject{$suffix}" class="textarea"></textarea></td>
+		</tr>
+	</table>
+</div>
+
+<script>
+	var gridData = {};
+	$(function(){
+		$('#MARQUEE{$suffix}').hide();
+		$('#NAME{$suffix}').hide();
+		$('#videos{$suffix}').hide();
+	});
+	
+	$('#type{$suffix}').change(function(){
+		var p = $(this).children('option:selected').val();
+		changeType( p );
+
+	});	
+	
+	function changeType( _p ){
+		if( _p == '1' ){
+			$('#CHANNEL{$suffix}').show();
+			$('#SERVICE_ID{$suffix}').show();
+			$('#MARQUEE{$suffix}').hide();
+			$('#NAME{$suffix}').hide();
+			$('#videos{$suffix}').hide();
+		}else if( _p == '2' ){
+			$('#CHANNEL{$suffix}').hide();
+			$('#SERVICE_ID{$suffix}').hide();
+			$('#MARQUEE{$suffix}').show();
+			$('#NAME{$suffix}').hide();
+			$('#videos{$suffix}').hide();			
+		}else if( _p == '3' ){
+			$('#CHANNEL{$suffix}').hide();
+			$('#SERVICE_ID{$suffix}').hide();
+			$('#MARQUEE{$suffix}').hide();
+			$('#NAME{$suffix}').show();
+			$('#videos{$suffix}').show();
+		}
+		$('#channel{$suffix}').attr( 'value' , '' );
+		$('#service{$suffix}').attr( 'value' , '' );
+		$('#marquee{$suffix}').attr( 'value' , '' );
+		$('#name{$suffix}').attr( 'value' , '' );	
+	}
+	
+	function homePreviews(){
+		var _data_arr = selector.datagrid('getSelections');
+		if(_data_arr.length!=1){
+			$.messager.show({
+				title:'提示信息',
+				msg:'请选择一条记录预览'
+			});
+			return;
+		}else{
+			if( _data_arr[0]['type'] == 1 || _data_arr[0]['type'] == 2 ){
+				$.messager.show({
+					title:'提示信息',
+					msg:'首页电视/首页滚动字幕无在线预览'
+				});
+				return;
+			}else{
+				window.open('{$Think.const.SITE_URL}movies/' + _data_arr[0]['movies']);
+			}
+		}
+	}
+	
+	function hoemAudits( _title , _flags ){
+		var arrs = [];
+		var arrs = $('#datagrid{$suffix}').datagrid('getSelections');
+		if( arrs.length > 1 || arrs.length == 0 ){
+			$.messager.show({
+				title:"系统提示" , 
+				msg:"请选择一条记录进行操作"
+			});							
+			return;
+		}
+		if( arrs[0].type == 1 ) $('#auditType{$suffix}').html('首页电视');
+		if( arrs[0].type == 2 ) $('#auditType{$suffix}').html('滚动字幕');
+		if( arrs[0].type == 3 ) $('#auditType{$suffix}').html('公利医院首页视频');
+		$('#auditName{$suffix}').html( arrs[0].name );
+		$('#auditMovies{$suffix}').html( arrs[0].movies );
+		var id = arrs[0].id;
+		$('#dialogAudit{$suffix}').dialog({
+			modal:true,
+			title:_title,
+			width:680,
+			height:420,
+			iconCls : "icon-add",
+			maximizable:true,
+			closed:true,
+			cache:false,
+			bodyCls:"pass",	
+			buttons:[
+				{text:'通过',id:'regSubmit',handler:function(){
+					if( _flags == 1 ){
+						var postObj = {id:id , audit_id:{$user_id} ,state:2};
+					}else if( _flags == 2 ){
+						var postObj = {id:id , release_id:{$user_id} ,state:4};
+					}
+					$.post('__CONTROLLER__/homeAudit?flag='+_flags,postObj,function(result){
+						$('#datagrid{$suffix}').datagrid('reload');
+						$('#datagrid{$suffix}').datagrid('unselectAll');
+						$('#dialogAudit{$suffix}').dialog('close');
+						$.messager.show({
+							title:result.status , 
+							msg:result.message
+						});
+					},'json');						
+				}},
+				{text:'驳回',id:'regSubmit',handler:function(){
+					if( $('#reject{$suffix}').val() == '' ){
+						$.messager.show({
+							title:"系统提示" , 
+							msg:"请录入驳回理由"
+						});							
+						return;
+					}
+					var reject = $('#reject{$suffix}').val();
+					if( _flags == 1 ){
+						var postObj = {id:id , audit_id:{$user_id} , state:3 , reject:reject};
+					}else if( _flags == 2 ){
+						var postObj = {id:id , release_id:{$user_id} , state:5 , reject:reject};
+					}
+					
+					$.post('__CONTROLLER__/homeAudit?flag='+_flags,postObj,function(result){
+						$('#datagrid{$suffix}').datagrid('reload');
+						$('#dialogAudit{$suffix}').dialog('close');
+						$('#datagrid{$suffix}').datagrid('unselectAll');
+						$.messager.show({
+							title:result.status , 
+							msg:result.message
+						});
+					},'json');
+				}}
+			]			
+		});
+		$('#dialogAudit{$suffix}').dialog('open');		
+	}
+	
+	var url='__CONTROLLER__/homeShow';
+	var selector = $('#datagrid{$suffix}');
+	var idField = "id";
+	var columns = [[
+		{field:'type',title:'所属类型',width:50,formatter:function(v,d,i){
+			switch(v){
+				case '1':
+				return '首页电视';
+				case '2':
+				return '首页滚动字幕';
+				case '3':
+				return '公利医院首页视频';
+			}
+		}},
+		{field:'name',title:'滚动字幕/视频描述/SERVICE_ID',width:50},
+		{field:'movies',title:'视频文件名/安卓频道号',width:50},
+		{field:'state',title:'状态',width:50,formatter:function(v,d,i){
+			switch(v){
+				case '1':
+				return '待审核';
+				case '2':
+				return '审核通过';
+				case '3':
+				return '审核驳回';
+				case '4':
+				return '已发布';
+				case '5':
+				return '发布驳回';
+				case '6':
+				return '下线';
+			}			
+		}}
+	]];
+	var pageSize=18;
+	var toolbar="#equipmentManage-toolbar{$suffix}";
+	creatDataGrid(selector,pageSize,toolbar,url,idField,columns);
+	function homeEdits( _title , _flag ){
+		var id = 0;
+		if( _flag == 1 ){
+			var rows = gridData['rows'];
+			if( rows.length == 3 ){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"类型已存在，请进行修改操作"
+				});							
+				return;				
+			}
+			changeType( '1' );
+			
+		}else if( _flag == 3 ){
+			var arrs = [];
+			var arrs = $('#datagrid{$suffix}').datagrid('getSelections');
+			if( arrs.length > 1 || arrs.length == 0 ){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"请选择一条记录进行修改"
+				});							
+				return;
+			}
+			changeType( arrs[0]['type'] );
+			id = arrs[0]['id'];
+			$('#type{$suffix}').attr( 'value' , arrs[0]['type'] );
+			if( arrs[0]['type'] == 1 ){
+				$('#service{$suffix}').attr( 'value' , arrs[0]['name'] );
+				$('#channel{$suffix}').attr( 'value' , arrs[0]['movies'] );
+			}else if( arrs[0]['type'] == 2 ){
+				$('#marquee{$suffix}').attr( 'value' , arrs[0]['name'] );
+			}else if( arrs[0]['type'] == 3 ){
+				$('#name{$suffix}').attr( 'value' , arrs[0]['name'] );
+			}
+		}
+		$('#dialog{$suffix}').dialog({
+			modal:true,
+			title:_title,
+			width:580,
+			height:220,
+			iconCls:_flag==1?"icon-add":"icon-edit",
+			maximizable:true,
+			closed:true,
+			cache:false,
+			bodyCls:"pass",	
+			buttons:[
+				{text:'提交',id:'regSubmit',handler:function(){
+					var type = $('#type{$suffix}').val();
+					var name = '0';
+					var movies = '0';
+					var bool = true;
+					console.info(gridData);
+					$.each( gridData['rows'] , function(i,n){
+						if( n.type == type ){
+							bool = false;
+							return;
+						}
+					});
+					if( !bool ){
+						$.messager.show({
+							title:"系统提示" , 
+							msg:"内容已存在，请点击修改"
+						});							
+						return;
+					}
+					if( type == '1' ){
+						name = $('#service{$suffix}').val();
+						movies = $('#channel{$suffix}').val();
+						if( name == '' || movies == '' ){
+							$.messager.show({
+								title:"系统提示" , 
+								msg:"首页电视SERVICE_ID或安卓频道号不能为空"
+							});							
+							return;
+						}
+					}else if( type == '2' ){
+						name = $('#marquee{$suffix}').val();
+						if( name == '' ){
+							$.messager.show({
+								title:"系统提示" , 
+								msg:"滚动字幕不能为空"
+							});							
+							return;
+						}
+					}else if( type == '3' ){
+						name = $('#name{$suffix}').val();
+						$.ajax({
+							url: '{$Think.const.JSON_CACHE_PATH}{$user_id}.htm',
+							dataType: 'text',
+							async: false,
+							success: function(result){
+								movies = result;
+							}
+						});
+						if( movies == '' ){
+							if( _flag == 1 ){
+								if( movies == '' || movies == '0' ){
+									$.messager.show({
+										title:"系统提示" , 
+										msg:"医院首页视频不能为空"
+									});	
+									return;
+								} 
+							}else if( _flag == 3 ){
+								movies = arrs[0]['movies'];
+							}
+						}
+						
+					}
+					$.post('__CONTROLLER__/homeEdit?flag='+_flag,{id:id , name:name , movies:movies , type:type ,operate_id:{$user_id}},function(result){
+						$('#datagrid{$suffix}').datagrid('reload');
+						$('#dialog{$suffix}').dialog('close');
+						$('#datagrid{$suffix}').datagrid('unselectAll');
+						$.messager.show({
+							title:result.status , 
+							msg:result.message
+						});
+					},'json');					
+				}},
+				{text:'重置',id:'regSubmit',handler:function(){
+				}}
+			]			
+		});
+
+		$('#dialog{$suffix}').dialog('open');
+	}
+	
+	function onOrDownLineAudit( _flag ){
+		var arrs = [];
+		var arrs = $('#datagrid{$suffix}').datagrid('getSelections');
+		if( arrs.length > 1 || arrs.length == 0 ){
+			$.messager.show({
+				title:"系统提示" , 
+				msg:"请选择一条记录进行操作"
+			});							
+			return;
+		}
+		if( arrs[0].type == 4 && _flag == 'on'){
+			$.messager.show({
+				title:"系统提示" , 
+				msg:"当前记录已发布，不能重新上线"
+			});							
+			return;
+		}
+		if( arrs[0].type == 6 && _flag == 'down'){
+			$.messager.show({
+				title:"系统提示" , 
+				msg:"当前记录已下线，不能重新下线"
+			});							
+			return;
+		}
+		var id = arrs[0].id;
+		if( _flag == 'on' ) var state = 4;
+		else if( _flag == 'down' ) var state = 6;
+		$.post('__CONTROLLER__/homeLine?flag='+_flag,{id:id,state:state},function(result){
+			$('#datagrid{$suffix}').datagrid('reload');
+			$('#datagrid{$suffix}').datagrid('unselectAll');
+			$.messager.show({
+				title:result.status , 
+				msg:result.message
+			});
+		},'json');
+	}
+</script>

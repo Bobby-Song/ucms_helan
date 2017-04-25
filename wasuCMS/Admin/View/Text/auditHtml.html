@@ -1,0 +1,117 @@
+<div class="easyui-panel" fit=true border=false>
+	<div class="easyui-layout" fit=true>
+		<div region='center' border=false>
+			<div class='easyui-panel' fit=true title="内容审核" style="padding:3px;">
+				<table class='browser'>
+					<tr>
+						<td class='sidebar' colspan="2">基本信息</td>
+					</tr>
+					<tr>
+						<td class='label'>标题</td>
+						<td id="title{$suffix}"></td>
+					</tr>					
+					<tr>
+						<td class='label'>条目缩略图</td>
+						<td id="pics{$suffix}"></td>
+					</tr>
+					<tr>
+						<td class='label'>视频链接</td>
+						<td id="video_lnk{$suffix}"></td>
+					</tr>
+					<tr>
+						<td class='label'>视频文件名</td>
+						<td id="videos{$suffix}"></td>
+					</tr>
+					<tr>
+						<td class='label'>内容</td>
+						<td id="content{$suffix}"></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<div region="south" border="false" style="overflow: hidden;height:35px;text-align:center;line-height:35px;margin-top:3px;background:#F2F2F2">
+			<a href="#" class="easyui-linkbutton" onClick="sendAudit(1)">通过</a>
+			<a href="#" class="easyui-linkbutton" onClick="sendAudit(2)">驳回</a>
+		</div>
+	</div>
+</div>
+<div id="auditDialog{$suffix}">
+	<table class='browser'>
+		<tr>
+			<td class='label'>请输入驳回原因</td>
+			<td><textarea id="back_reason{$suffix}" name="back_reason{$suffix}" class="textarea"></textarea></td>
+		</tr>
+	</table>
+</div>
+<script>
+var selectorDialog=$("#auditDialog{$suffix}");
+var selectorContent=$("#back_reason{$suffix}");
+
+$(function(){
+	$('#title{$suffix}').html(data_arr[0].title);
+	$('#video_lnk{$suffix}').html(data_arr[0].video_lnk);
+	$('#videos{$suffix}').html(data_arr[0].videos);
+	$('#content{$suffix}').html(data_arr[0].content);
+	if( data_arr[0].pics != '' && data_arr[0].pics != '0' ){
+		var arr = data_arr[0].pics.split('!!');	
+		arr.pop();
+		console.info(arr);
+		var len = '';
+		$.each(arr,function(i,n){
+			len += "<img src = '{$Think.const.IMAGE_ABS_PATH}"+arr[i]+"' style = 'padding-right:5px;width:40px;height:40px'>";
+		});
+		$('#pics{$suffix}').html(len);
+	}else{
+		$('#pics{$suffix}').html('');
+	}
+});
+
+function sendAudit(_flag){
+	var id = data_arr[0].id;
+	var back_reason = "";
+	if(_flag==2){
+		selectorDialog.dialog({
+			modal:true,
+			title:"审核驳回",
+			width:650,
+			height:260,
+			maximizable:true,
+			closed:true,
+			cache:false,
+			bodyCls:"pass",
+			buttons:[
+				{text:'提交',handler:function(){
+					back_reason = selectorContent.val();
+					if( back_reason == "" ){
+						$.messager.show({
+							title:"系统提示", 
+							msg:"驳回理由不能为空"
+						});	
+						return;
+					}else{
+						$.post(controllerAudits,{id:id,flag:auditType,back_reason:back_reason,state:_flag},function(result){
+							$.messager.show({
+								title:result.status , 
+								msg:result.message
+							});
+							closeTab(editsTitle);
+						},'json');							
+					}
+				}},
+				{text:'重置',handler:function(){
+					selectorContent.attr("value",'');
+				}}
+			]
+		});
+		selectorDialog.dialog('open');
+	}else{
+		$.post(controllerAudits,{id:id,flag:auditType,state:_flag,back_reason:back_reason},function(result){
+			$.messager.show({
+				title:result.status , 
+				msg:result.message
+			});
+			closeTab(editsTitle);
+		},'json');		
+	}
+}	
+</script>

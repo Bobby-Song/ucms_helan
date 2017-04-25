@@ -1,0 +1,117 @@
+<table id='regionData{$suffix}'></table>
+<div id="regionMenu{$suffix}" class="easyui-menu" style="width:130px;">
+	<div id='insert{$suffix}' iconCls="icon-add" onclick="regionTempEdit('关联模板')">关联模板</div>
+
+</div>
+<div id="regDialog{$suffix}">
+	<table class='browser'>
+		<tr>
+			<td class='label'>模板</td>
+			<td>
+				<select size="1" name="temp{$suffix}" class="select" id="temp{$suffix}" style="width:150px;">
+				</select>
+			</td>
+		</tr>
+	</table>
+</div>
+<script>
+	$('#regionData{$suffix}').treegrid({
+		fit:true,
+		idField:'id',//数据表格要有主键	
+		treeField:'text',//treegrid 树形结构主键 text
+		animate:true,//动画效果
+		fitColumns:true,//自动扩大或缩小列的尺寸以适应表格的宽度并且防止水平滚动
+		rownumbers:false,//显示行号的列
+		url:'__MODULE__/Region/showCityTempReg',	
+		columns:[[
+			{field:'text',title:'区域名称　[请右键点击节点进行操作管理]',width:200} ,
+			{field:'id',title:'区域ID',width:120} ,
+			{field:'code',title:'区域编码',width:120} ,
+			{field:'temp_name',title:'模板关联',width:120} ,
+		]],
+		onContextMenu: function(e,row){
+			e.preventDefault();					//屏蔽浏览器的菜单
+			$(this).treegrid('unselectAll');	//清除所有选中项
+			$(this).treegrid('select', row.id);//选中状态
+			var level = row.level;
+			if( level == 1 ) return;
+			else{
+				$('#regionMenu{$suffix}').menu('show', {
+					left: e.pageX,
+					top: e.pageY
+				});
+			}
+		}
+	});
+
+	function regionTempEdit( _title ){
+		var gridNode = $('#regionData{$suffix}').treegrid('getSelected');		
+		var selector = $('#regDialog{$suffix}');
+		var title = gridNode.text + _title;
+		var width = 300;
+		var height = 130;
+		var iconCls = 'icon-add';
+		var buttons = [
+			{text:'关联',id:'regSubmit',handler:function(){
+				var text = $('#temp{$suffix}').combotree( 'getText' );
+				if( text == '' ){
+					$.messager.show({
+						title: "系统提示", 
+						msg: "模板选择不能为空"
+					});
+					return;
+				}
+				var data = { id : gridNode.id , temp_id : $('#temp{$suffix}').combo( 'getValue' ) };
+				$('#regDialog{$suffix}').dialog( 'close' );
+				sendData( '__MODULE__/Region/tempCorr' , data );
+			}},
+			{text:'重置',id:'regSet',handler:function(){
+				
+			}}
+		];
+		if( gridNode.temp_id != 0 ){
+			$.messager.confirm('系统提示','你选择的区域已关联模板，继续操作区域模板数据将改变，是否继续操作?',function(b){
+				if( b ){
+					createDiaLog( selector , title , width , height , iconCls , buttons);
+					$('#temp{$suffix}').combo( 'setText' , '' );
+					selector.dialog('open');
+				}else{
+					return;
+				}
+			});
+		}else{
+			createDiaLog( selector , title , width , height , iconCls , buttons);
+			$('#temp{$suffix}').combo( 'setText' , '' );
+			selector.dialog('open');
+		}
+
+	}
+	
+	$('#temp{$suffix}').combotree({
+		lines : true,
+		animate : true,	
+		url : '__MODULE__/Desktop/createTmpTree',
+		onClick : function( node ){
+			$(this).tree( 'toggle' , node.target );
+			var type = node.attributes.type;
+			if ( type != 'con' ){
+				$('#temp{$suffix}').combo( 'setText' , '' );		
+			}
+		}
+	});
+	
+	function sendData( _controller , _data ){
+		$('#Loadings').show();
+		$.post( _controller , _data , function( result ){
+			$('#Loadings').hide();
+			$.messager.show({
+				title:result.title , 
+				msg:result.message
+			});
+			if ( result.error == 0 ){
+				$('#regionData{$suffix}').treegrid( 'reload');
+			}
+			
+		},'json');	
+	}
+</script>

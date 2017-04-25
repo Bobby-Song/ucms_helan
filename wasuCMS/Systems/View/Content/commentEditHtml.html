@@ -1,0 +1,77 @@
+<div class="easyui-panel" fit=true border=false>
+	<div class="easyui-layout" fit=true>
+		<div region='center' border=false>
+			<div class='easyui-panel' fit=true style="padding:3px;">
+				<table class='browser'>
+					<tr>
+						<td class='sidebar' colspan="2">评论信息</td>
+					</tr>
+					<tr>
+						<td class='label'>评论内容</td>
+						<td><input type='text' id='comment{$suffix}' name='comment{$suffix}' class='myInp' style='width:600px;'>&nbsp;&nbsp;<span style='color:red'>*</span></td>
+						
+					</tr>
+
+
+				</table>
+			</div>
+		</div>
+		<div region="south" border="false" style="overflow: hidden;height:35px;text-align:center;line-height:35px;margin-top:3px;background:#F2F2F2">
+			<a href="#" class="easyui-linkbutton" id="submits">提交</a>
+			<a href="#" class="easyui-linkbutton" id="resets">重置</a>
+		</div>
+	</div>
+</div>
+<script>
+	$(function(){
+		$("#submits").bind('click', dataValidation);
+	});
+
+	var id;
+
+	if( editsFlag == 1 ){
+		id = 0 ;
+	}else if( editsFlag == 3 ){
+		id = comment_arr[0].id;
+		$('#comment{$suffix}').attr( 'value' , comment_arr[0].comment );
+	}
+
+	
+	//数据验证
+	function dataValidation(){
+		$("#Loadings").show();
+		var editController = '__MODULE__/Content/commentEditData?flag='+editsFlag;
+		var comment = $('#comment{$suffix}').val();
+
+		var editData = {
+			id : id ,
+			comment : comment ,
+			content_id : content_id
+		};
+		if( comment == ''){
+			$.messager.show({
+				title:"系统提示" , 
+				msg:"评论内容不能为空"
+			});	
+		}
+        sendContent_comment( editController , editData );
+	}
+
+	function sendContent_comment( _controller , _data ){
+		$.post( _controller , _data , function(result){
+			$("#Loadings").hide();
+			$.messager.show({
+				title:result.title ,
+				msg:result.message
+			});
+			closeTab_comment( editsTitle );
+		},'json');
+	}
+
+	function closeTab_comment( _title ){
+        selectorDataGrid_comment.datagrid('reload');
+        selectorDataGrid_comment.datagrid('unselectAll');
+		$('#tree_tabs').tabs("close", _title);
+	}
+
+</script>

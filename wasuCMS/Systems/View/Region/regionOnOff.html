@@ -1,0 +1,101 @@
+<table id='regionData{$suffix}'></table>
+<div id="regionMenu{$suffix}" class="easyui-menu" style="width:130px;">
+	<div iconCls="icon-shape_square_add" onclick="regOnOff('on')">上线</div>
+	<div class='menu-sep'></div>
+	<div iconCls="icon-shape_square_delete" onclick="regOnOff('off')">下线</div>
+</div>
+<script>
+	$('#regionData{$suffix}').treegrid({
+		fit:true,
+		idField:'id',//数据表格要有主键	
+		treeField:'text',//treegrid 树形结构主键 text
+		animate:true,//动画效果
+		fitColumns:true,//自动扩大或缩小列的尺寸以适应表格的宽度并且防止水平滚动
+		rownumbers:false,//显示行号的列
+		url:'__MODULE__/Region/showRerionGridTree',	
+		columns:[[
+			{field:'text',title:'区域名称　[请右键点击节点进行操作管理]',width:150} ,
+			{field:'id',title:'区域ID',width:40} ,
+			{field:'code',title:'区域编码',width:120} ,
+			{field:'begin_ip',title:'起始IP',width:120,formatter:function(v,d,i){
+				if( d.level == 4 ){
+					if( v == 0 ) return '未设定';
+					else return _int2iP( v );
+				}else{
+					return '';
+				}
+			}} ,
+			{field:'end_ip',title:'终止IP',width:120,formatter:function(v,d,i){
+				if( d.level == 4 ){
+					if( v == 0 ) return '未设定';
+					else return _int2iP( v );
+				}else{
+					return '';
+				}
+			}} ,
+			{field:'temp_name',title:'关联模板',width:120} ,
+			{field:'status',title:'状态',width:120,styler:function(v,d,i){
+				if ( v == '上线') return 'color:green;font-weight:bold';
+				else return 'color:red;font-weight:bold';
+			},formatter:function(v,d,i){
+				if( d.level == 1 ) return '';
+				else return v;
+			}}
+		]],
+		onContextMenu: function(e,row){
+			e.preventDefault();					//屏蔽浏览器的菜单
+			$(this).treegrid( 'unselectAll' );	//清除所有选中项
+			$(this).treegrid( 'select' , row.id );//选中状态
+			if( row.level == 1 ){
+				return;
+			}			
+			$('#regionMenu{$suffix}').menu('show', {
+				left: e.pageX,
+				top: e.pageY
+			});
+		}
+	});
+	
+	function regOnOff( _state ){
+		var gridNode = $('#regionData{$suffix}').treegrid( 'getSelected' );
+		var parent = $('#regionData{$suffix}').treegrid( 'getParent' , gridNode.id );
+		if( parent.level != 1 ){		
+			if( _state == 'on' && parent.status == '下线'){
+				$.messager.show({
+					title: "系统提示", 
+					msg: "当前区域父级区域为下线状态，不能改为上线，请重新操作"
+				});
+				return;				
+			}
+			if( _state == 'on' && gridNode.status == '上线' ){
+				$.messager.show({
+					title: "系统提示", 
+					msg: "当前区域区域为上线状态,请重新操作"
+				});
+				return;	
+			}
+			if( _state == 'off' && gridNode.status == '下线' ){
+				$.messager.show({
+					title: "系统提示", 
+					msg: "当前区域区域为下线状态,请重新操作"
+				});
+				return;	
+			}
+		}
+		var status;
+		_state == 'on' ? status = '上线' : status = '下线';
+		var data = { id : gridNode.id , status : status };
+		sendData( '__MODULE__/Region/regOnOff' , data );
+	}
+	
+	function sendData( _controller , _data ){
+		$.post( _controller , _data , function(result){	
+			$.messager.show({
+				title:result.title , 
+				msg:result.message
+			});
+			if ( result.error == 0 )
+			$('#regionData{$suffix}').treegrid( 'reload');			
+		},'json');	
+	}
+</script>

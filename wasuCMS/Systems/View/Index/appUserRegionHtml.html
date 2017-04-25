@@ -1,0 +1,97 @@
+<table id='datagrid{$suffix}'></table>
+<div id="equipmentManage-toolbar{$suffix}" style="padding:2px 0">
+	<table cellpadding="0" cellspacing="0" style="width:100%">
+		<tr>
+			<td style="padding-left:2px">
+				<a href="#" class="easyui-linkbutton" iconCls="icon-release" plain="true" onClick="auditUserRegion('用户区域审核')">用户区域审核</a>
+			</td>
+			<td style="text-align:right;padding-right:2px">
+				<input id="serchboxs{$suffix}" menu="#mm">
+			</td>
+		</tr>
+	</table>
+</div>
+<div id="mm" style="width:100px">  
+	<div name="name" iconCls="icon-application-view-list">按用户名</div>
+</div>
+
+<script>
+	$('#Loadings').show();
+	var selector=$('#datagrid{$suffix}');
+	var selectorSearBox=$('#serchboxs{$suffix}');
+    var region_id = '{$region_id}';
+
+	var mobileUserRegionAudits = "__CONTROLLER__/mobileUserRegionAudit";	//审核控制器方法
+
+	var pageSize=18;
+	var toolbar="#equipmentManage-toolbar{$suffix}";
+	var url='__CONTROLLER__/mobileUserView?region='+region_id;
+	var idField="id";
+	var columns=[[
+		{field:'id',title:'用户id',width:30},
+		{field:'name',title:'用户名称',width:100},
+        {field:'sex',title:'性别',width:30},
+        {field:'phone',title:'用户电话',width:100},
+		{field:'bind_region_name',title:'用户绑定区域',width:100},
+		{field:'bind_regionid',title:'用户绑定区域码',width:100},
+        {field:'status',title:'是否有在手机端发布内容的权限',width:100,styler:function( v , d , r ){
+            if( v == '无权限' ){
+                return 'color:#000';
+            }else if( v == '有权限' ){
+                return 'color:#4FB83A;font-weight:bold';
+            }
+        }}
+	]];
+	creatDataGrid(selector,pageSize,toolbar,url,idField,columns);
+
+	var dialogSelector = $( '#dialog{$suffix}' );
+	var id = 0;
+
+	function auditUserRegion( _title ){
+		var arr = selector.datagrid('getSelections');
+		if(arr.length<1){
+			$("#Loadings").hide();
+			$.messager.show({
+				title:'提示信息',
+				msg:'请至少选择一条记录操作'
+			});
+			return;
+		}else{
+		    var bind_region;
+            for(var i = 0; i < arr.length; i ++){
+                bind_region = arr[i].bind_regionid;
+            }
+            if (bind_region == 0) {
+                $.messager.show({
+                    title:'提示信息',
+                    msg:'未选择绑定区域的用户不能审核'
+                });
+                return;
+            }
+			var str = '';
+			for(var i = 0; i < arr.length; i ++){
+				str += arr[i].id + ',';
+			}
+			str = str.substr(0, str.length - 1);
+			$.post(mobileUserRegionAudits, {str : str}, function( result ){
+				$.messager.show({
+					title : result.title,
+					msg : result.message
+				});
+                selector.datagrid('reload');
+                selector.datagrid('unselectAll');
+				$("#Loadings").hide();
+			},'json');
+		}
+	}
+
+
+	$("#serchboxs{$suffix}").searchbox({   
+		width:300,   
+		searcher:function(value, name){
+			selector.datagrid('load',{name : name, value : value});
+		},   
+		menu:'#mm',   
+		prompt:'请输入查询字段'
+	});	
+</script>

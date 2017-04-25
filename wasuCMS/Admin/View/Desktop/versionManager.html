@@ -1,0 +1,238 @@
+<table id='dataGrid{$suffix}'></table>
+<div id="toolbar{$suffix}" style="padding:2px 0">
+    <table cellpadding="0" cellspacing="0" style="width:100%">
+        <tr>
+            <td style="padding-left:2px">
+                <a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onClick="apkAdd()">新增</a>
+                <span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-remove" plain="true" onClick="apkUpdate()">修改</a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="dialog{$suffix}">
+    <table class='browser'>
+        <tr>
+            <td class='label'>应用</td>
+            <td>
+                <p id="apk{$suffix}"></p>
+            </td>
+            <td>
+                <p id="apkpath{$suffix}"></p><span style='color:red'>* 不超过20M</span>
+            </td>
+        </tr>
+        <tr>
+            <td class='label'>图标</td>
+            <td>
+                <p id="icon{$suffix}"></p>
+            </td>
+            <td>
+                <p id="iconpath{$suffix}"></p><span style='color:red'>* 512*512px</span>
+            </td>
+        </tr>
+        <tr>
+            <td class='label'>应用截图</td>
+            <td>
+                <p id="shot{$suffix}"></p>
+            </td>
+            <td>
+                <p id="shotpath{$suffix}"></p><span style='color:red'>最多5张</span>
+            </td>
+        </tr>
+        <tr>
+            <td class='label'>下载地址</td>
+            <td colspan="2">
+                <input type='text' id='downloadurl{$suffix}' name='downloadurl{$suffix}' class='myInp' placeholder="此地址优先级高于本地下载">
+            </td>
+        </tr>
+        <tr>
+            <td class='label'>关键词</td>
+            <td colspan="2">
+                <input type='text' id='keyword{$suffix}' name='keyword{$suffix}' class='myInp' placeholder="多个关键词以逗号分隔">
+            </td>
+        </tr>
+        <tr>
+            <td class='label'>描述</td>
+            <td colspan="2">
+                <input type="text" id="desc{$suffix}" name="desc{$suffix}" class='myInp' placeholder="当前版本升级说明" />
+            </td>
+        </tr>
+    </table>
+</div> 
+
+<script>
+    var appid="{$id}";
+    var gridData = {};
+    var selectorDataGrid = $('#dataGrid{$suffix}'); //datagrid 组件选择器
+    var pageSize=18; //datagrid 默认显示行数
+    var toolbar = "#toolbar{$suffix}"; //工具条
+    var dataGridUrl = '__MODULE__/Index/getApkList/appid/'+appid;
+    var dialogSelector = $( '#dialog{$suffix}' );
+    var idField = "id";
+    var columns=[[
+        {field:'id',hidden:true},
+        {field:'apk_name',title:'应用名称',width:60},
+        {field:'apk_packname',title:'应用包名称',width:40},
+        {field:'apk_vername',title:'版本名称',width:30},
+        {field:'apk_version',title:'版本号',width:30},
+        {field:'downloads',title:'下载量',width:30},
+        {field:'apk_size',title:'应用大小/MB',width:30},
+        {field:'keywords',title:'关键词',width:60},
+        {field:'apk_desc',title:'描述',width:60},
+        {field:'apk_status',title:'状态',width:60},
+        {field:'create_time',title:'上传时间',width:50}
+    ]];
+    
+    creatDataGrid( selectorDataGrid , pageSize , toolbar , dataGridUrl , idField , columns );
+    
+    $('#apk{$suffix}').Huploadify({
+        auto : true,
+        fileTypeExts : '*.apk',
+        fileSizeLimit : "20MB",
+        fileObjName : "Filedata",
+        uploader : '__MODULE__/Index/apkUpload',
+        onUploadStart : function(){
+            $("#Loading").show();
+            $("#showStatus").html('正在上传，请稍候......');
+        },
+        onUploadSuccess : function( result , file ){
+            $("#Loading").hide();
+            var data = JSON.parse(file);
+            if( data.code == 0 ){
+                $('#apkpath{$suffix}').attr( 'filepath' , data.data );
+                $('#regSubmit').linkbutton('enable');               
+            }else{
+                $('#apkpath{$suffix}').attr( 'filepath' , '' );
+                $('#regSubmit').linkbutton('disable');
+            }
+            
+            $('#apkpath{$suffix}').html(data.desc);
+        }
+    });
+    
+    $('#icon{$suffix}').Huploadify({
+        auto : true,
+        fileTypeExts : '*.jpg;*.gif;*.GIF;*.JPG;*.png;*.PNG',
+        fileSizeLimit : "200",
+        fileObjName : "Filedata",
+        uploader : '__MODULE__/Index/apkIconUpload',
+        onUploadStart : function(){
+            $("#Loading").show();
+            $("#showStatus").html('正在上传，请稍候......');
+        },
+        onUploadSuccess : function( result , file ){
+            $("#Loading").hide();
+            var data = JSON.parse(file);
+            if( data.code == 0 ){
+                $('#iconpath{$suffix}').attr( 'filepath' , data.data );
+                $('#regSubmit').linkbutton('enable');               
+            }else{
+                $('#iconpath{$suffix}').attr( 'filepath' , '' );
+                $('#regSubmit').linkbutton('disable');
+            }
+            
+            $('#iconpath{$suffix}').html(data.desc);
+        }
+    });
+    
+    $('#shot{$suffix}').Huploadify({
+        auto : true,
+        fileTypeExts : '*.jpg;*.gif;*.GIF;*.JPG;*.png;*.PNG',
+        multi : true,
+        fileSizeLimit : "200",
+        fileObjName : "Filedata",
+        uploader : '__MODULE__/Index/apkShotUpload',
+        onUploadStart : function(){
+            $("#Loading").show();
+            $("#showStatus").html('正在上传，请稍候......');
+        },
+        onUploadSuccess : function( result , file ){
+            $("#Loading").hide();
+            var data = JSON.parse(file);
+            if( data.code == 0 ){
+                $('#shotpath{$suffix}').attr( 'filepath' , data.data );
+                $('#regSubmit').linkbutton('enable');               
+            }else{
+                $('#shotpath{$suffix}').attr( 'filepath' , '' );
+                $('#regSubmit').linkbutton('disable');
+            }
+            
+            $('#shotpath{$suffix}').html(data.desc);
+        }
+    });
+    
+    function apkAdd(){
+	    var width = 740;
+        var height = 320;
+        var iconCls = "icon-add";
+        var title = '应用新增';
+        var buttons =[
+            {text:'提交',id:'regSubmit',handler:function(){
+                if( $('#iconpath{$suffix}').attr('filepath') == '' || $('#apkpath{$suffix}').attr('filepath') == '' ){
+                    $.messager.show({
+                        title: "系统提示", 
+                        msg: "文件未上传或者图片未上传！"
+                    });
+                    return;
+                }
+                
+                $.ajax({
+                    "url": "__MODULE__/Index/addApk",
+                    "data": {
+                	    "app_id" : appid,
+                	    "downloadurl" : $('#downloadurl{$suffix}').val(),
+                	    "keywords" : $('#keyword{$suffix}').val(),
+                        "apk_desc" : $('#desc{$suffix}').val()
+                    },
+                    "type": "post",
+                    "dataType": "json",
+                    success: function(ret){
+                        msgTips(ret.code, ret.desc);
+                        if(ret.code == 0){
+                            selectorDataGrid.datagrid('reload');
+                        }
+                    }
+                });
+                
+                dialogSelector.dialog('close');
+            }},
+            {text:'重置',id:'regSet',handler:function(){
+                $('#downloadurl{$suffix}').val('');
+                $('#keyword{$suffix}').val('');
+                $('#desc{$suffix}').val('');
+            }}
+        ];
+        
+	    createDiaLog( dialogSelector , title , width , height , iconCls , buttons);
+        dialogSelector.dialog('open');
+    }
+    
+    function apkUpdate(){
+        var sel = selectorDataGrid.datagrid("getSelections");
+        console.log(sel);
+        if(sel.length != 1){
+            $.messager.alert("温馨提示", "请选择一条数据进行操作");
+            return;
+        }
+        
+        var tip = sel[0].status == 1 ? '封禁' : '启用';
+        
+        $.messager.confirm("警告", "是否"+tip+"选中的用户", function(b){
+            if(b){
+                $.ajax({
+                    url: "__CONTROLLER__/modifyUserStatus/id/"+sel[0].id,
+                    dataType: 'json',
+                    success:function(ret){
+                        if(ret.code == 0){
+                            $.messager.alert('温馨提示', '操作成功');
+                            selectorDataGrid.datagrid("reload");
+                        }else{
+                            $.messager.alert('温馨提示', ret.desc);
+                        }
+                    }
+                });
+            }
+        })
+    }
+</script>

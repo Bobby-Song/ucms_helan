@@ -1,0 +1,223 @@
+<script>
+	$(function(){
+		$('#dialog{$suffix}').hide();
+	});
+</script>
+<div class="easyui-panel" fit=true border=false>
+	<div class="easyui-layout" fit=true>
+		<div region='west' collapsible=false style="width:300px;padding-right:3px;" border=false>
+			<div class='easyui-panel' fit=true title="栏目点击率统计" style="overflow:hidden;">
+				<div id="event_type" style="width:300px; height:280px;"></div>
+			</div>
+		</div>
+		<div region='center' border=false>
+			<div class='easyui-panel' fit=true title="点击率详情">
+				<table id="clickrate"></table>
+			</div>
+		</div>
+		<div region="south" border=false style="overflow:hidden;height:200px;padding-top:3px;background:">
+			<div class='easyui-panel' fit=true title="首页在播内容">
+				<table id="event_statistics"></table>
+			</div>
+		</div>
+	</div>
+</div>
+<div id='dialog{$suffix}'>
+	<table class='browser'>
+		<tr>
+			<td class='sidebar' colspan="2">请输入8~15位密码</td>
+		<tr>
+		<tr>
+			<td class='label'>初始密码</td>
+			<td><input id="oldPassWord{$suffix}" onpaste="return false;" type="password" name="oldPassWord{$suffix}" style="ime-mode:disabled"  class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span></td>
+		<tr>
+		<tr>
+			<td class='label'>输入新密码</td>
+			<td><input id="newPassWord{$suffix}" onpaste="return false;" type="password" name="newPassWord{$suffix}" style="ime-mode:disabled"  class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span></td>
+		<tr>
+		<tr>
+			<td class='label'>确认新密码</td>
+			<td><input id="aginPassWord{$suffix}" onpaste="return false;" type="password" name="aginPassWord{$suffix}" style="ime-mode:disabled"  class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span></td>
+		<tr>
+	</table>
+</div>
+<script>
+
+
+var clickrateArr=[];
+$.ajax({
+	url:'__CONTROLLER__/clickRate?flag=1',
+	dataType: 'json',
+	async: false,
+	success: function(result){
+		clickrateArr = result;
+	}
+});
+function createBrands(id){
+	 // Build the chart
+	$('#'+id).highcharts({
+		chart: {
+			plotBackgroundColor: null,
+			plotBorderWidth: null,
+			plotShadow: false,
+			type: 'pie'
+		},
+		title: {
+			text: null
+		},
+		tooltip: {
+			pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+		},
+		plotOptions: {
+			pie: {
+				allowPointSelect: true,
+				cursor: 'pointer',
+				dataLabels: {
+					enabled: false
+				},
+				showInLegend: true
+			}
+		},
+		series: [{
+			name: "点击百分比",
+			colorByPoint: true,
+			data: clickrateArr
+				
+		}]
+	});
+}
+createBrands('event_type');
+
+$("#clickrate").datagrid({
+	idField:'node',
+	pageSize:18,
+	url:'__CONTROLLER__/clickRate?flag=2',
+	fitColumns:true,
+	fit:true,
+	border:false,
+	striped:true,
+	loadMsg:'数据正在加载，请等待......',
+	rownumbers:true,
+	columns:[[
+		{field:'node',title:'栏目名',width:100},
+		{field:'topNode',title:'所属根栏目',width:100},
+		{field:'clickrate',title:'点击数',width:100}
+	]]
+});
+
+$('#event_statistics').datagrid({
+	idField:'id',//只要创建表格，就必须要加idField
+	fit:true,
+	url:'__CONTROLLER__/homeShow',
+	pageSize:18,
+	border:false,
+	fitColumns:true,
+	loadMsg:'数据正在加载，请等待......',
+	rownumbers:true,
+	frozenColumns:[[//在冻结列中加入多选框
+		{field:'chek',checkbox:true}
+	]],
+	columns:[[
+		{field:'type',title:'所属类型',width:50,formatter:function(v,d,i){
+			switch(v){
+				case '1':
+				return '首页电视';
+				case '2':
+				return '首页滚动字幕';
+				case '3':
+				return '公利医院首页视频';
+			}
+		}},
+		{field:'name',title:'滚动字幕/视频描述/SERVICE_ID',width:50},
+		{field:'movies',title:'视频文件名/安卓频道号',width:50},
+		{field:'state',title:'状态',width:50,formatter:function(v,d,i){
+			switch(v){
+				case '1':
+				return '待审核';
+				case '2':
+				return '审核通过';
+				case '3':
+				return '审核驳回';
+				case '4':
+				return '已发布';
+				case '5':
+				return '发布驳回';
+				case '6':
+				return '下线';
+			}			
+		}}
+	]],
+	pagination:true,//显示分页栏
+	onLoadSuccess:function(data){
+		loadFlag=1;
+	}
+});
+	$.post('__CONTROLLER__/passwordVerify',{
+		user_id:{$user_id}
+	},function(result){
+		if(result==0){
+			chagePass();
+		}
+	},'text');
+	
+	function chagePass(){
+		$('#dialog{$suffix}').dialog({
+			modal : true,
+			title : "更改密码",
+			width : 480,
+			height : 230,
+			iconCls : "icon-edit",
+			maximizable:true,
+			closed:true,
+			cache:false,
+			bodyCls:"pass",
+			buttons:[
+				{text:'提交',id:'regSubmit',handler:function(){
+					if($('#newPassWord{$suffix}').val().length<8 || $('#newPassWord{$suffix}').val().length>15){
+						$.messager.show({
+							title: "系统提示", 
+							msg: "请输入8~15位密码"
+						});
+						return;
+					}
+					if($('#newPassWord{$suffix}').val()!=$('#aginPassWord{$suffix}').val()){
+						$.messager.show({
+							title: "系统提示", 
+							msg: "请输入8~15位密码"
+						});
+						return;
+					}
+					if($('#oldPassWord{$suffix}').val()==""){
+						$.messager.show({
+							title: "系统提示", 
+							msg: "请输入初始密码"
+						});
+						return;
+					}
+					$.post('__CONTROLLER__/changePassWord',{
+						user_id:{$user_id},
+						newPassWord:$('#newPassWord{$suffix}').val(),
+						aginPassWord:$('#aginPassWord{$suffix}').val(),
+						oldPassWord:$('#oldPassWord{$suffix}').val()
+					},function(re){
+						$.messager.show({
+							title:re.status , 
+							msg:re.message
+						});
+						if(re.error==1){
+							$('#dialog{$suffix}').dialog('close');
+							setTimeout('window.location.href="__MODULE__/Login/logOut"',2000);
+						}
+						
+					},'json');
+				}},
+				{text:'重置',id:'regSubmits',handler:function(){
+				}}
+			]
+		});
+		$('#dialog{$suffix}').dialog('open');
+	}
+	$("#changPassWord").click(function(){
+		chagePass();
+	})
+</script>

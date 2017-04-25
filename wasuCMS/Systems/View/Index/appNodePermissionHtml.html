@@ -1,0 +1,130 @@
+<table id='datagrid{$suffix}'></table>
+<div id="equipmentManage-toolbar{$suffix}" style="padding:2px 0">
+	<table cellpadding="0" cellspacing="0" style="width:100%">
+		<tr>
+			<td style="padding-left:2px">
+				<a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onClick="appNodePermissionEdits('新增',1)">新增</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onClick="appNodePermissionEdits('修改',3)">修改</a>
+			</td>
+		</tr>
+	</table>
+</div>
+<div id="dialog{$suffix}">
+	<table class='browser'>
+
+		<tr id="nodeDisplay">
+			<td class='label'>栏目选择</td>
+			<td>
+				<select size="1" name="node{$suffix}" class="select" id="node{$suffix}" style="width:300px;">
+				</select>
+			</td>
+		</tr>
+
+	</table>
+</div>
+<script>
+	$('#Loadings').show();
+	var selector=$('#datagrid{$suffix}');
+    var region_id = '{$region_id}';
+	var pageSize=18;
+	var toolbar="#equipmentManage-toolbar{$suffix}";
+	var url='__CONTROLLER__/appNodePermissionView?region_id='+region_id;
+	var idField="id";
+	var columns=[[
+		{field:'region_name',title:'区域名称',width:100},
+		{field:'region_id',title:'区域码',width:100},
+		{field:'nodes',title:'可操作栏目版块',width:500,formatter:function(v,d,i){
+			if ( v == '0') {
+				return '全栏目版块';
+			} else {
+				var nodearrs = v.split(',');
+				$('#node{$suffix}').combotree( 'setValues' , nodearrs );
+				return $('#node{$suffix}').combotree( 'getText' );
+			}
+		}}
+	]];
+	creatDataGrid(selector,pageSize,toolbar,url,idField,columns);
+
+	var dialogSelector = $( '#dialog{$suffix}' );
+	var id = 0;
+	
+	function appNodePermissionEdits(_title,_flag) {
+		var permission_arr = selector.datagrid('getSelections');
+		$('#node{$suffix}').combotree( 'setValue' , '' );
+        if (_flag == 1) {
+            var arr= selector.datagrid('getRows');
+            if (arr.length > 0) {
+                $.messager.show({
+                    title:'提示信息',
+                    msg:'该记录已存在,不能新增'
+                });
+                return;
+            }
+        } else if( _flag == 3 ){
+			if( permission_arr.length!=1 ){
+				$.messager.show({
+					title: "系统提示", 
+					msg: "请选择一条记录修改"
+				});
+				return;
+			}else{
+				id = permission_arr[0].id;
+				if ( permission_arr[0].nodes == 0 ) {
+				    $('#node{$suffix}').combotree( 'setValue' , '' );
+                } else {
+					var nodearr = permission_arr[0].nodes.split(',');
+					$('#node{$suffix}').combotree( 'setValues' , nodearr );
+				}
+			}
+		}
+		if(_flag==1 || _flag==3){
+			var width = 380;
+			var height = 130;
+			var iconCls = _flag == 1 ? "icon-add" : "icon-edit";
+			var title = _title;
+			var buttons = [
+				{text:'提交',id:'regSubmit',handler:function(){
+					var nodes = $('#node{$suffix}').combotree('getValues');
+					var len = '';
+					$.each( nodes , function( i , n ){
+						if( i < nodes.length-1 )
+						len += n + ',';
+						else 
+						len += n;
+					});
+
+					var data = { id : id , region_id : region_id , nodes : len , flag : _flag };
+					sendData( '__CONTROLLER__/appNodePermissionEdit' , data );
+				}},
+				{text:'重置',id:'regSubmit',handler:function(){
+				}}
+			];
+			createDiaLog( dialogSelector , title , width , height , iconCls , buttons);
+			dialogSelector.dialog('open');
+		}
+	}
+	
+	function sendData( _controller , _data ){
+		$.post( _controller , _data , function(result){	
+			$.messager.show({
+				title:result.title , 
+				msg:result.message
+			});
+			if ( result.error == 0 ){			
+				selector.datagrid( 'reload' );
+				if ( _data.flag == 3 || _data.flag == 1 )
+				dialogSelector.dialog( 'close' );
+			}
+		},'json');	
+	}
+
+
+	$('#node{$suffix}').combotree({ 
+		panelWidth:300,
+		panelHidth:150,
+		multiple:true,
+		url:'__CONTROLLER__/showNodeTree?region_id='+region_id
+	});	
+
+</script>

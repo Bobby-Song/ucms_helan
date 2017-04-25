@@ -1,0 +1,149 @@
+<div class="easyui-panel" fit=true border=false>
+	<div class="easyui-layout" fit=true>
+		<div region='center' border=false>
+			<div class='easyui-panel' fit=true style="padding:3px;">
+				<table class='browser'>
+					<tr>
+						<td class='sidebar' colspan="2">基本信息</td>
+					</tr>
+					<tr>
+						<td class='label'>标题</td>
+						<td><input type='text' id='title{$suffix}' name='title{$suffix}' class='myInp' style='width:600px;'>&nbsp;&nbsp;<span style='color:red'>*</span></td>
+						
+					</tr>
+
+                    <tr>
+                        <td class='label'>条目缩略图</td>
+                        <td>
+                            <p id="photo{$suffix}"></p>
+                            <p id="ShowImg{$suffix}"></p>
+                        </td>
+                    </tr>
+
+					<tr>
+						<td class='label'>内容简介</td>
+						<td>
+                            <textarea name="desc{$suffix}" id="desc{$suffix}" style="width:600px;height:40px;margin-bottom:5px;font-size:12px"></textarea>&nbsp;&nbsp;<span style='color:red'>*</span>
+						</td>
+					</tr>
+
+				</table>
+			</div>
+		</div>
+		<div region="south" border="false" style="overflow: hidden;height:35px;text-align:center;line-height:35px;margin-top:3px;background:#F2F2F2">
+			<a href="#" class="easyui-linkbutton" id="submits">提交</a>
+			<a href="#" class="easyui-linkbutton" id="resets">重置</a>
+		</div>
+	</div>
+</div>
+<script>
+    console.info("activeNodeHtml data_arr:"+data_arr);
+	var urls = '{$Think.const.UPLOAD_PATH}image/';
+	$(function(){
+		$("#submits").bind('click', dataValidation);
+	});
+
+	var id;
+    var icon = '';
+    var nu = 100;
+    var nums = 0;
+
+	if( editsFlag == 1 ){
+		id = 0 ;
+	}else if( editsFlag == 3 ){
+		id = data_arr[0].id;
+		$('#title{$suffix}').attr( 'value' , data_arr[0].title );
+		$('#desc{$suffix}').html( data_arr[0].desc );
+
+        var len = '';
+        icon = data_arr[0].pic;
+        var icon_arr = icon.split("!!");
+        if( icon_arr.length > 1){
+            icon_arr.pop();
+            $.each(icon_arr,function(i,n){
+                len += "<img id='"+nu+"' src='"+icon_arr[i]+"' width='100px' style='padding-right:5px' onClick='c("+nu+")' title='点击删除图片' name='"+icon_arr[i]+"' flag='icon'>";
+                nu++;
+            });
+        }else{
+            len = "<img id='"+nu+"' src='"+icon_arr[0]+"' width='100px' style='padding-right:5px' onClick='c("+nu+")' title='点击删除图片' name='"+icon_arr[0]+"' flag='icon'>";
+            nu++;
+        }
+        $('#ShowImg{$suffix}').html(len);
+	}
+
+	
+	//数据验证
+	function dataValidation(){
+		$("#Loadings").show();
+		var editController = '__MODULE__/Content/activeNodeEditData?flag='+editsFlag;
+		var title = $('#title{$suffix}').val();
+		var desc = $('#desc{$suffix}').val();
+
+		var editData = {
+			id : id ,
+			desc : desc ,
+			title : title , 
+			pic : icon ,
+			node_id : node_code ,
+			region_id : region_id ,
+			node_type : node_type
+		};
+		if( title == '' || desc == '' || icon == ''){
+			$.messager.show({
+				title:"系统提示" , 
+				msg:"标题、内容与图片不能为空"
+			});	
+		}
+		sendContent( editController , editData );
+	}
+
+
+
+    $('#photo{$suffix}').Huploadify({
+        auto:true,
+        fileTypeExts:'*.jpg;*.gif;*.GIF;*.JPG;*.png;*.PNG',
+        multi:true,
+        uploader:'__CONTROLLER__/picUpload',
+        onUploadSuccess:function(result,file){
+            var data = eval('(' + file + ')');
+            var pic= data.file_name;
+            nums++;
+            var imgs = "<img id='"+nums+"' src='"+pic+"' width='100px' style='padding-right:5px' onClick='c("+nums+")' title='点击删除图片' name='"+pic+"' flag='icon'>";
+            $('#ShowImg{$suffix}').append(imgs);
+            icon += pic+'!!';
+        }
+    });
+
+
+    function c(_id){
+        var flag = $('#'+_id).attr('flag');
+        var img_name = $('#'+_id).attr('name');
+        var img_path = '..' + img_name;
+        if(flag == 'icon'){
+            icon = icon.replace(new RegExp(img_name+'!!'),"");
+        }
+
+
+        $('#'+_id).remove();
+        if( editsFlag == 3 )
+            var active_node_id = data_arr[0].id;
+        else if( editsFlag == 1 )
+            var active_node_id = 0;
+        $.ajax({
+            url: '__CONTROLLER__/unlinkFile',
+            type: 'post',
+            dataType: 'json',
+            data:{img_path:img_path,flag:flag,icon:icon,active_node_id:active_node_id,editsFlag:editsFlag,node_type:node_type},
+            async: false,
+            success: function(result){
+                $.messager.show({
+                    title:result.status ,
+                    msg:result.message
+                });
+            }
+        });
+    }
+
+
+
+</script>

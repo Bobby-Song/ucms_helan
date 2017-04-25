@@ -1,0 +1,74 @@
+一、prefix_node  节点表
+
+id           自增ID
+pid          父ID
+text         节点名称
+name         节点文件目录
+url          叶节点程序处理路径
+icon         节点图标
+region       节点所属区域
+
+
+二、prefix_content 内容管理表
+
+id
+title        标题
+region_id    区域
+node_id      内容所属节点
+type         内容类型：图文/相册/视频/商城/征询类有图/征询类无图
+
+
+contents     内容
+videos       视频文件名
+album_pic    相册/征询图片路径
+album_title  相册/征询标题
+icon         标题缩略图/评议图/商品图/视频截图
+
+qrcode       商品支付二维码
+price        商品单价
+unit         商品单位
+
+like         点赞
+ctr          点击率
+
+operate      操作员
+audit        审核
+release      发布
+
+operate_time 操作时间
+audit_time   审核时间
+release_time 发布时间
+
+state        内容状态：待审核/审核通过/驳回/已发布/上线/下线
+sort         排序
+path         视频以外类型路径
+
+三、prefix_comment 内容评论表
+
+id 
+pid          内容ID
+type_id      评论类型
+comment      评论内容
+author       评论人ID/评论终端机器号
+times        评论时间
+state        评论状态：审核未通过 发布（文字类）
+
+四、prefix_comment_type 评论类型
+id
+type 
+
+1.text 文字 
+2.like 点赞
+3.bool 同意、反对
+
+五、prefix_region
+id
+pid
+name
+code
+
+
+
+
+
+

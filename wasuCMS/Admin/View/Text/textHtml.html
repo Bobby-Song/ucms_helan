@@ -1,0 +1,102 @@
+<table id='dataGrid{$suffix}'></table>
+<div id="toolbar{$suffix}" style="padding:2px 0">
+	<table cellpadding="0" cellspacing="0" style="width:100%">
+		<tr>
+			<td style="padding-left:2px">
+				<if condition="($permissions eq 1 OR $user_type eq 5)">
+				<a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onClick="edits('新增内容',1)">新增</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-remove" plain="true" onClick="deletes()">删除</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onClick="edits('修改内容',3)">修改</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-application-get" plain="true" onClick="lineMove('up')">上移</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-application-put" plain="true" onClick="lineMove('down')">下移</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-table-multiple" plain="true" onClick="lineMove('top')">置顶</a>
+				<elseif condition="$permissions eq 2"/>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-audit" plain="true" onClick="audits('内容审核','con_auditor')">审核</a>
+				<elseif condition="$permissions eq 3"/>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-release" plain="true" onClick="audits('内容发布','con_release')">发布</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-online" plain="true" onClick="onOrDownLine('on')">上线</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-downline" plain="true" onClick="onOrDownLine('down')">下线</a>
+				</if>
+			</td>
+			<td style="text-align:right;padding-right:2px">
+				<input id="serchboxs{$suffix}" menu="#mm"></input>
+			</td>
+		</tr>
+	</table>
+</div>
+
+<div id="mm" style="width:100px">  
+	<div name="edit_time" iconCls="icon-application-view-list">按添加日期</div>  
+	<div name="title" iconCls="icon-application-view-list">按标题</div>
+	<div name="state" iconCls="icon-application-view-list">按状态</div>
+</div>
+
+<script>
+	var data_arr;//声明选择数据行数组
+	var editsFlag;//编辑状态
+	var editsTitle;//编辑标题
+	var auditType;//审核/发布
+	
+	var editHtml = "__MODULE__/Text/editHtml";
+	var controllerLineMove = "__MODULE__/Text/lineMove"; //排序控制器
+	var controllerTopMove = "__MODULE__/Text/topMove"; //置顶控制器
+	var controllerAuditHtml = "__MODULE__/Text/auditHtml";
+	var controllerAudits = "__MODULE__/Text/audits";
+	var controllerOnOrDownLine = "__MODULE__/Text/onOrDownLine";
+	var controllerDelets = "__MODULE__/Text/deletes"; 
+	
+	var selectorDataGrid = $('#dataGrid{$suffix}'); //datagrid 组件选择器
+	var selectorSearBox = $('#serchboxs{$suffix}'); //serchbox 组件选择器
+	var pageSize=18; //datagrid 默认显示行数
+	var toolbar = "#toolbar{$suffix}"; //工具条
+	var dataGridUrl = '__MODULE__/Text/showData?node_id='+nodeId;
+	var idField="id";
+	var columns=[[
+		{field:'title',title:'标题',width:50},
+		{field:'edit_time',title:'添加时间',width:50},
+		{field:'region_name',title:'所属社区',width:50},
+		{field:'state',title:'状态',width:50,formatter:function(v,d,i){
+			switch(v){
+				case '1':
+				return '待审核';
+				case '2':
+				return '审核通过';
+				case '3':
+				return '审核驳回';
+				case '4':
+				return '已发布';
+				case '5':
+				return '发布驳回';
+				case '6':
+				return '下线';
+			}			
+		},styler:function(value,rowData,rowIndex){
+			if(value=="3" || value=="5" || value=="6")
+			return 'color:red;font-weight:bold';
+			else if(value=="2")
+			return 'color:#FE9002;font-weight:bold';
+			else if(value=="4")
+			return 'color:green;font-weight:bold';			
+		}}
+		,{field:'back_reason',title:'驳回原因',width:50}
+	]];
+	
+	creatDataGrid( selectorDataGrid , pageSize , toolbar , dataGridUrl , idField , columns );
+	creatSearchBox();
+	var pg = selectorDataGrid.datagrid("getPager"); 
+	if(pg){  
+		$(pg).pagination({  
+		   onSelectPage:function(pageNumber,pageSize){  
+			   selectorDataGrid.datagrid('unselectAll'); 
+			}  
+		});  
+	} 	
+	
+</script>

@@ -1,0 +1,241 @@
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>系统安装</title>
+	<link rel="stylesheet" type="text/css" href="../wasuCMS/public/css/install.css">
+	<link rel="stylesheet" type="text/css" href="../wasuCMS/public/clientFramework/themes/default_bak/easyui.css">
+	<link rel="shortcut icon" href="../wasuCMS/public/images/web.ico">
+    <style>
+        .myInp{color:#000000;}
+        #wizard span{color:#ff0000};
+    </style>
+	<script type="text/javascript" src="../wasuCMS/public/clientFramework/jquery-1.7.2.min.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../wasuCMS/public/clientFramework/jquery.easyui.min.js" charset="utf-8"></script>
+	<script type="text/javascript" src="../wasuCMS/public/clientFramework/locale/easyui-lang-zh_CN.js" charset="utf-8"></script>
+	<script>
+		$(function(){
+            $('#Loadings').hide();
+            $('#wizard').hide();
+            if(localStorage.installStatus){
+                $.messager.confirm("危险警告","您已经成功部署过系统，再次部署将导致之前的所有数据丢失，是否继续？",function(b){
+                    if(b){
+                        init();
+                    }else{
+                        location.href='../wasuCMS/Login/';
+                    }
+                });
+            }else{
+                init();
+            }
+		});
+        
+        function init(){
+            var url = location.href;
+            
+            var tmp = url.split("://");
+            if(tmp[1].indexOf(":") != -1){
+                var tmp1 = tmp[1].split(":");
+                var tmp2 = tmp1[1].split("/");
+                var ip = tmp1[0];
+                var port = tmp2[0];
+            }else{
+                var tmp1 = tmp[1].split("/");
+                var ip = tmp1[0];
+                var port = 80;
+            }
+            
+            $("#portalHostIP").val(ip);
+            $("#portalHostPort").val(port);
+            
+            if(!localStorage.install){
+                $('#welCome').show();
+                $("#installMenu").bind('click', hideDiv);
+            }else{
+                hideDiv();
+            }
+            $("#installSubmit").bind('click', installSubmit);
+        }
+		
+		function hideDiv(){
+            localStorage.install = true;
+			$('#welCome').hide();
+			$('#wizard').show();					
+		}
+		function installSubmit(){
+			var data ={
+				DB_HOST : $('#dbHost').val(),
+				DB_PORT : $('#dbPort').val(),
+				DB_USER : $('#dbUser').val(),
+				DB_PWD : $('#dbPWD').val(),
+				DB_NAME : $('#dbName').val(),
+				DB_PREFIX : $('#dbPrefix').val(),
+				PORTAL_HOST_IP : $('#portalHostIP').val(),
+				PORTAL_HOST_PORT : $('#portalHostPort').val(),
+				SYSTEM_DIRECTOR : $('#systemDirector').val(),
+				SYSTEM_DIRECTOR_PWD : $('#systemDirectorRepeatPWD').val(),
+			};
+			
+			if( data.DB_NAME == 'mysql'){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"数据库名不能用" + data.DB_NAME + "命名"
+				});
+				return;
+			}
+			
+			if ( data.DB_HOST != 'localhost' && !checkSubmitIp( data.DB_HOST ) ){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"数据库服务器地址格式不正确"
+				});
+				return;
+			}
+			
+			if( !checkSubmitIp( data.PORTAL_HOST_IP ) ){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"门户服务器地址格式不正确"
+				});
+				return;
+			}
+			
+			if ( data.DB_USER == '' || data.DB_NAME =='' || data.DB_PREFIX == '' || data.SYSTEM_DIRECTOR_PWD == '' || data.SYSTEM_DIRECTOR_REPEAT_PWD == '' ){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"必填项不能为空"
+				});
+				return;				
+			}
+			var SYSTEM_DIRECTOR_REPEAT_PWD = $('#systemDirectorPWD').val();
+			//密码是8~16位数字特殊字符字母组合正则验证
+			var reg = /(?=.*[a-z])(?=.*\d)(?=.*[#@!~%^&*])[a-z\d#@!~%^&*]{8,16}/i;
+			if ( ( data.SYSTEM_DIRECTOR_PWD != SYSTEM_DIRECTOR_REPEAT_PWD ) || !data.SYSTEM_DIRECTOR_PWD.match( reg ) ){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"系统总监密码不符合格式或两次输入不一致"
+				});
+				return;	
+			}
+            
+			$('#Loadings').show();
+			$.ajax({
+                url:'./server/index.php',
+                type: "post",
+                data: data,
+                dataType: "json",
+                success: function(result){
+                    $('#Loadings').hide();
+                    $.messager.show({
+                        title:result.status , 
+                        msg:result.message
+                    });
+                    if( result.prompt == 1){
+                        localStorage.installStatus = true;
+                        setTimeout( "location.href='../wasuCMS/Login/'" , 3000);
+                    }
+                },
+                error:function(){
+                    $('#Loadings').hide();
+                    $.messager.show({
+                        title:"系统提示" , 
+                        msg:"系统异常，请找开发人员排除错误后在行部署"
+                    });
+                }
+            });			
+		}
+		
+		function checkSubmitIp(_ip){     
+			//var reg =  /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/     
+			//return reg.test(_ip);
+            
+            return true;
+		} 
+	</script>
+</head>
+<body>
+	<div id='Loadings'>
+		<table>
+			<tr>
+				<td><img src='../wasuCMS/public/images/loading2.gif'/></td>
+				<td id='showStatus'>请稍候，远程数据生成中···</td>
+			</tr>
+		</table>
+	</div>
+
+	<div id="welCome" style="display:none;">
+		<p><img id='installMenu' src = '../wasuCMS/public/images/installMenu.png'></p>
+	</div>
+	<div id="wizard">
+		<p><img src = '../wasuCMS/public/images/installWizardBg.png'></p>
+		<table class='browser'>
+			<tr>
+				<td class = 'title' colspan="3">配置数据库/门户服务</td>
+			</tr>
+			<tr>
+				<td class='label'>主门户服务器</td>
+				<td><input type='text' id='portalHostIP' name='portalHostIP' class='myInp' value=""></td>
+				<td><span>*</span>输入主门户服务器IP地址</td>
+			</tr>
+			<tr>
+				<td class='label'>主门户服务器端口</td>
+				<td><input type='text' id='portalHostPort' name='portalHostPort' class='myInp' value=""></td>
+				<td><span>*</span>输入主门户服务器端口</td>
+			</tr>
+			<tr>
+				<td class='label'>数据库服务器</td>
+				<td><input type='text' id='dbHost' name='dbHost' value = 'localhost' class='myInp'></td>
+				<td class='explain'><span>*</span>一般为localhost或者填写你的数据库IP地址</td>
+			</tr>
+			<tr>
+				<td class='label'>数据库服务器端口</td>
+				<td><input type='text' id='dbPort' name='dbPort' class='myInp' placeholder="默认为3306时可以不填写"></td>
+				<td class='explain'></td>
+			</tr>
+			<tr>
+				<td class='label'>数据库用户名</td>
+				<td><input type='text' id='dbUser' name='dbUser' value='root' class='myInp'></td>
+				<td><span>*</span>填写从空间服务商哪里获取的数据库账号和密码</td>
+			</tr>
+			<tr>
+				<td class='label'>数据库密码</td>
+				<td><input type='text' id='dbPWD' name='dbPWD' class='myInp' value="" placeholder="数据库的密码"></td>
+				<td><span>*</span>数据库root账户的密码</td>
+			</tr>
+			<tr>
+				<td class='label'>数据库名</td>
+				<td><input type='text' id='dbName' name='dbName' value = 'cms' class='myInp'></td>
+				<td><span class="must">*</span></td>
+			</tr>
+			<tr>
+				<td class='label'>数据表前缀</td>
+				<td><input type='text' id='dbPrefix' name='dbPrefix' value = 'cms_' class='myInp'></td>
+				<td><span>*</span></td>
+			</tr>
+			<tr>
+				<td class = 'title'  colspan="3">设置系统总监密码</td>
+			</tr>
+			<tr>
+				<td class='label'>系统总监-账户</td>
+				<td><input type='text' id='systemDirector' name='systemDirector' value = 'admin' disabled class='myInp'></td>
+				<td><span>*</span>&nbsp;</td>
+			</tr>
+			<tr>
+				<td class='label'>系统总监-密码</td>
+				<td><input type='text' id='systemDirectorPWD' name='systemDirectorPWD' class='myInp' value="yulong@2017"></td>
+				<td><span>*</span>请输入8~16位字母数字特殊符组合密码</td>
+			</tr>
+			<tr>
+				<td class='label'>系统总监-重复密码</td>
+				<td><input type='text' id='systemDirectorRepeatPWD' name='systemDirectorRepeatPWD' class='myInp' value="" placeholder="请输入和上面相同的密码"></td>
+				<td><span>*</span>重复上述密码</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td colspan="2"><img id = 'installSubmit' src = '../wasuCMS/public/images/installSubmit.png'> 　<img id = 'installReset' src = '../wasuCMS/public/images/installReset.png'></td>
+			</tr>			
+		</table>
+	</div>
+	<script>
+	</script>
+</body>
+</html>

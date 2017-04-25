@@ -1,0 +1,105 @@
+<table id='datagrid{$suffix}'></table>
+<div id="equipmentManage-toolbar{$suffix}" style="padding:2px 0">
+	<table cellpadding="0" cellspacing="0" style="width:100%">
+		<tr>
+			<td style="padding-left:2px">
+				<a href="#" class="easyui-linkbutton" iconCls="icon-release" plain="true" onClick="auditEmergencyBroadcast('应急广播审核', 'y')">应急广播审核</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-release" plain="true" onClick="auditEmergencyBroadcast('应急广播驳回', 'n')">应急广播驳回</a>
+			</td>
+			<td style="text-align:right;padding-right:2px">
+				<input id="serchboxs{$suffix}" menu="#mm">
+			</td>
+		</tr>
+	</table>
+</div>
+<div id="mm" style="width:100px">
+	<div name="title" iconCls="icon-application-view-list">按标题</div>
+</div>
+
+<script>
+	$('#Loadings').show();
+	var selector=$('#datagrid{$suffix}');
+	var selectorSearBox=$('#serchboxs{$suffix}');
+	var region_id = '{$region_id}';
+
+	var emergencyBroadcastAudits = "__CONTROLLER__/emergencyBroadcastAudit";	//审核控制器方法
+
+	var pageSize=18;
+	var toolbar="#equipmentManage-toolbar{$suffix}";
+	var url='__CONTROLLER__/emergencyBroadcastView?region='+region_id;
+	var idField="id";
+	var columns=[[
+		{field:'id',title:'id',width:30},
+		{field:'title',title:'标题',width:100},
+		{field:'contents',title:'内容',width:200},
+		{field:'voice',title:'广播语音',width:100},
+		{field:'operate_time',title:'添加时间',width:100},
+		{field:'region_name',title:'区域名',width:100},
+		{field:'region_id',title:'区域码',width:100},
+		{field:'audit_status',title:'是否审核',width:50,styler:function( v , d , r ){
+			if( v == '未播出' ){
+				return 'color:#000';
+			}else if( v == '已播出' ){
+				return 'color:#4FB83A;font-weight:bold';
+			}else if( v == '已驳回' ){
+                return 'color:#F95809;font-weight:bold';
+            }
+		}},
+		{field:'release_time',title:'播出时间',width:100}
+	]];
+	creatDataGrid(selector,pageSize,toolbar,url,idField,columns);
+
+	var dialogSelector = $( '#dialog{$suffix}' );
+	var id = 0;
+
+	function auditEmergencyBroadcast( _title, _flag ){
+		var arr = selector.datagrid('getSelections');
+
+		if(arr.length < 1){
+			$("#Loadings").hide();
+			$.messager.show({
+				title:'提示信息',
+				msg:'请至少选择一条记录操作'
+			});
+			return;
+		}else{
+            var status = '';
+            for(var i = 0; i < arr.length; i ++){
+                status = arr[i].status ;
+            }
+            if (status == '上线' || status == '驳回') {
+                $.messager.show({
+                    title:'提示信息',
+                    msg:'选择中有已播出/已驳回的广播，不能重新审核'
+                });
+                return;
+            }
+
+			var str = '';
+			for(var i = 0; i < arr.length; i ++){
+				str += arr[i].id + ',';
+			}
+			str = str.substr(0, str.length - 1);
+			$.post(emergencyBroadcastAudits, {str : str, flag : _flag}, function( result ){
+				$.messager.show({
+					title : result.title,
+					msg : result.message
+				});
+				selector.datagrid('reload');
+				selector.datagrid('unselectAll');
+				$("#Loadings").hide();
+			},'json');
+		}
+	}
+
+
+	$("#serchboxs{$suffix}").searchbox({
+		width:300,
+		searcher:function(value, name){
+			selector.datagrid('load',{name : name, value : value});
+		},
+		menu:'#mm',
+		prompt:'请输入查询字段'
+	});
+</script>

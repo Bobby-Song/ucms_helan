@@ -1,0 +1,219 @@
+<div class="easyui-panel" fit=true border=false>
+	<div class='easyui-layout' fit=true >
+		<div region='center' border=false>
+			<table id='dataGrid{$suffix}'></table>
+		</div>
+	</div>
+</div>
+
+<div id="toolbar{$suffix}" style="padding:2px 0">
+	<table cellpadding="0" cellspacing="0" style="width:100%">
+		<tr>
+			<td style="padding-left:2px">
+				<a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onClick="tmpEdits('新增模板',1)">新增</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height:15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-remove" plain="true" onClick="tmpEdits('',2)">删除</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height:15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onClick="tmpEdits('修改模板',3)">修改</a>
+			</td>
+			<td style="text-align:right;padding-right:2px">
+				<input id="serchboxs{$suffix}" menu="#mm"></input>
+			</td>
+		</tr>
+	</table>
+</div>
+
+<div id="mm" style="width:100px">  
+	<div name="text" iconCls="icon-application-view-list">模板名称</div>  
+	<div name="class" iconCls="icon-application-view-list">模板类别</div>
+</div>
+
+<div id="dialog{$suffix}">
+	<table class='browser'>
+		<tr>
+			<td class='label'>模板名称</td>
+			<td>
+				<input type='text' id='text{$suffix}' name='text{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+				<input id="zipPath{$suffix}" type="hidden" name="zipPath{$suffix}" />
+			</td>
+		</tr>
+		<tr>
+			<td class='label'>模板类别</td>
+			<td>
+				<select size="1" name="class{$suffix}" class="select" id="class{$suffix}" style="width:150px;">
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td class='label'>上传ZIP包</td>
+			<td>
+				<p id="zip{$suffix}"></p>
+			</td>
+		</tr>
+		<tr>
+			<td class='label' id='statusUp{$suffix}'>上传状态</td>
+			<td>
+				<p id="path{$suffix}"></p>
+			</td>
+		</tr>
+	</table>
+</div> 
+
+<script>
+	var selector = $('#dataGrid{$suffix}');
+	var dialogSelector = $( '#dialog{$suffix}' );
+	var selectorSearBox = $('#serchboxs{$suffix}');
+	var pageSize = 18;
+	var toolbar = '#toolbar{$suffix}';
+	var url = '__MODULE__/Desktop/templateShow';
+	var controllerTree = '__MODULE__/Desktop/createTmpTree';
+	var idField = 'id';
+	var treeNode;
+	var columns=[[
+		{ field : 'text' , title : '模板名称' , width : 50 },
+		{ field : 'class' , title : '模板类别' , width : 50 },
+		{ field : 'path' , title : '模板路径' , width : 50 }
+	]];
+	
+	//创建树表格
+	creatDataGrid( selector , pageSize , toolbar , url , idField , columns );
+	//创建搜索框
+	creatSearchBox( selector );
+	
+	/*
+	function crearTmpTree( _selectorTree , _controllerTree , _selector ){
+		_selectorTree.tree({
+			lines : true,
+			animate : true,
+			url : _controllerTree,
+			onClick : function( node ){
+				_selector.datagrid( 'unselectAll' );
+				//$(this).tree( 'toggle' , node.target );
+				var type = node.attributes.type;
+				if( type != ''){
+					if( type == 'test' )
+					_selector.datagrid( 'load' , { field : 'class' , value :  node.text } );	
+					else
+					_selector.datagrid( 'load' , { field : 'id' , value :  node.id } );					
+				}
+			}
+		});
+	}
+	*/
+	
+	function tmpEdits( _title , _flag ){
+		if ( _flag == 1 || _flag == 3 ){
+			var id = 0;			
+			var width = 540;
+			var height = 270;
+			var iconCls = _flag == 1 ? "icon-add" : "icon-edit";
+			var title = _title;
+			var buttons =[
+				{text:'提交',id:'regSubmit',handler:function(){
+					if( $('#text{$suffix}').val() == '' || $('#zipPath{$suffix}').val() == '' ){
+						$.messager.show({
+							title: "系统提示", 
+							msg: "模板名称不能为空或模板未上传"
+						});
+						return;
+					}
+					var data = { id : id , flag : _flag , text : $('#text{$suffix}').val() , path : $('#zipPath{$suffix}').val() , class : $( '#class{$suffix}' ).combobox( 'getText' ) };
+					sendData( '__MODULE__/Desktop/tmpEdits' , data );
+					dialogSelector.dialog('close');
+				}},
+				{text:'重置',id:'regSet',handler:function(){
+					$('#text{$suffix}').attr( 'value' , '' );
+				}}
+			];
+			$('#text{$suffix}').attr( 'value' , '' );
+			$('#path{$suffix}').html( '无模板上传' );
+			$('#statusUp{$suffix}').html( '上传状态' );
+			
+			if ( _flag == 3 ){
+				var tmpNode = selector.datagrid('getSelections');
+				if( tmpNode.length != 1 ){
+					$.messager.show({
+						title:'提示信息',
+						msg:'请选择一条记录修改'
+					});
+					return;
+				}
+				id = tmpNode[0].id;
+				$( '#text{$suffix}' ).attr( 'value' , tmpNode[0].text );
+				$( '#path{$suffix}' ).html( 'zip路径：' + tmpNode[0].path );
+				$( '#class{$suffix}' ).combobox( 'setText' , tmpNode[0].class );
+				$('#zipPath{$suffix}').attr( 'value' , tmpNode[0].path );
+				$('#statusUp{$suffix}').html( 'ZIP路径' );
+				//zip = tmpNode[0].path;
+			}
+			createDiaLog( dialogSelector , title , width , height , iconCls , buttons);
+			dialogSelector.dialog('open');			
+		}else if( _flag == 2 ){
+			var tmpNode = selector.datagrid('getSelections');
+			if ( tmpNode.length < 1 ){
+				$.messager.show({
+					title: "系统提示", 
+					msg: "请至少选择一条数据进行删除"
+				});
+				return;
+			}
+			var str = '';
+			for( var i = 0 ; i < tmpNode.length ; i++ ){
+				str += tmpNode[i].id + ',';
+			}
+			str = str.substr( 0 , str.length - 1 );
+			var data = { id : str , flag : _flag };
+			$.messager.confirm('系统提示','您真的要删除所选的记录吗，删除后数据不可恢复！',function(b){
+				if( b ){
+					sendData( '__MODULE__/Desktop/tmpEdits' , data );
+				}
+			});			
+		}
+	}
+	
+	$('#class{$suffix}').combobox({
+		url : '__MODULE__/Desktop/showTmpClass',
+		valueField : 'id',	
+		textField : 'text'	
+	});
+	
+	$('#zip{$suffix}').Huploadify({
+		auto : true,
+		fileTypeExts : '*.zip',
+		multi : true,
+		fileSizeLimit:99999999,
+		uploader : '__MODULE__/Desktop/zipUpload',
+		onUploadStart : function(){
+			$("#Loading").show();
+			$("#showStatus").html('正在上传解压中，请稍候......');
+		},
+		onUploadSuccess : function( result , file ){
+			$("#Loading").hide();
+			var data = eval('(' + file + ')');
+			if( data.error == 0 ){
+				$('#zipPath{$suffix}').attr( 'value' , data.file_name );
+				//zip = data.file_name;
+				$('#regSubmit').linkbutton('enable');				
+			}else if( data.error == 1 ){
+				//zip = '';
+				$('#zipPath{$suffix}').attr( 'value' , '' );
+				$('#regSubmit').linkbutton('disable');
+			}
+			$('#path{$suffix}').html(data.status);
+		}
+	});
+	
+	function sendData( _controller , _data ){
+		$.post( _controller , _data , function(result){	
+			$.messager.show({
+				title:result.title , 
+				msg:result.message
+			});
+			if ( result.error == 0 ){			
+				selector.datagrid( 'reload' );
+				if ( _data.flag != 2 )
+				dialogSelector.dialog( 'close' );
+			}
+		},'json');	
+	}
+</script>

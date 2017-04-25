@@ -1,0 +1,341 @@
+<table id='dataGrid{$suffix}'></table>
+<div id="toolbar{$suffix}" style="padding:2px 0">
+	<table cellpadding="0" cellspacing="0" style="width:100%">
+		<tr>
+			<td style="padding-left:2px">
+				<a href="#" class="easyui-linkbutton" plain="true" id="showRegion"></a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<if condition="($user_type eq '操作员')">
+				<a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onClick="homeEdits('新增数据',1)">新增</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onClick="homeEdits('修改数据',3)">修改</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<elseif condition="$user_type eq '内容审核'"/>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-audit" plain="true" onClick="audits('内容审核','con_auditor')">审核</a>
+				<elseif condition="$user_type eq '内容发布'"/>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-release" plain="true" onClick="audits('内容发布','con_release')">发布</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-online" plain="true" onClick="onOrDownLine('on')">上线</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-downline" plain="true" onClick="onOrDownLine('down')">下线</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				</if>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-application-form-magnify" plain="true" onClick="homePreviews()">预览</a>
+				
+			</td>
+		</tr>
+	</table>
+</div>
+
+<div id="dialog{$suffix}">
+	<table class='browser'>
+		<tr id='IsvideoFrame{$suffix}'>
+			<td class='label'>视频类型</td>
+			<td>
+				<select size="1" name="videoFrame{$suffix}" class="select" id="videoFrame{$suffix}" style="width:150px;">
+				</select>
+			</td>
+		</tr>
+		<tr id='IsPageLink{$suffix}'>
+			<td class='label' id="showName{$suffix}">链接地址</td>
+			<td>
+				<input type='text' id='pageLink{$suffix}' name='pageLink{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+			</td>
+		</tr>
+		<tr id='IsMovies{$suffix}'>
+			<td class='label'>视频上传</td>
+			<td>
+				<p id = "movies{$suffix}"></p>
+				<p id = "moviesFile{$suffix}"></p>
+			</td>
+		</tr>
+		<tr id='IsPics{$suffix}'>
+			<td class='label'>焦点图上传</td>
+			<td>
+				<p id = "pics{$suffix}"></p>
+				<p style="margin-top:10px;" id = "ShowImg{$suffix}"></p>
+			</td>
+		</tr>
+		<tr id='IsHtml{$suffix}'>
+			<td class='label'>网页上传</td>
+			<td>
+				<p id = "html{$suffix}"></p>
+				<p id = "htmlFile{$suffix}"></p>
+			</td>
+		</tr>		
+	</table>
+</div>
+
+<div id="dialogAudit{$suffix}">
+	<table class='browser'>
+		<tr>
+			<td class='label'>类型</td>
+			<td id = 'auditType{$suffix}'></td>
+		</tr>
+		<tr>
+			<td class='label'>SERVICE_ID/滚动字幕/视频描述</td>
+			<td id = 'auditName{$suffix}'></td>
+		</tr>
+		<tr>
+			<td class='label'>安卓频道号/视频文件名</td>
+			<td id = 'auditMovies{$suffix}'></td>
+		</tr>
+		<tr>
+			<td class='label'>驳回原因</td>
+			<td><textarea id="reject{$suffix}" name="reject{$suffix}" class="textarea"></textarea></td>
+		</tr>
+	</table>
+</div>
+
+<script>
+	$("#Loadings").show();
+	//var region_id = 0;
+	//var region_name = node_data.text;
+
+	$(function(){
+		$('#IsvideoFrame{$suffix}').hide();
+		$('#IsPageLink{$suffix}').hide();
+		$('#IsMovies{$suffix}').hide();
+		$('#IsPics{$suffix}').hide();
+		$('#IsHtml{$suffix}').hide();
+		$('#showRegion').html( '栏目当前所选区域：' + region_name );
+	});
+
+    $('#videoFrame{$suffix}').combobox({
+        data: [{
+            'id': '1',
+            'text': '直播'
+        },{
+            'id': '2',
+            'text': '视频点播'
+        },{
+            'id': '3',
+            'text': '固定地址'
+        }],
+        valueField : 'id',
+        textField : 'text',
+        onLoadSuccess:function(){
+            $(this).combobox( 'setValue' , '直播' );
+        },
+        onChange : function( n , o ){
+            changeVideoFrame( n );
+        }
+    });
+	
+	var controllerAuditHtml = "__MODULE__/Content/homeAuditHtml"; //审核页面地址
+	var controllerAudits = "__MODULE__/Content/audits";//审核控制器方法
+	var controllerOnOrDownLine = "__MODULE__/Content/onOrDownLine";//上下线控制器方法
+	
+	var gridData = {};
+	indexType( node_type );
+	var selectorDataGrid = $('#dataGrid{$suffix}'); //datagrid 组件选择器
+	var pageSize=18; //datagrid 默认显示行数
+	var toolbar = "#toolbar{$suffix}"; //工具条
+	var dataGridUrl = '__MODULE__/Content/homeEdit?node_id='+node_code+'&node_type='+node_type+'&region_id='+region_id;
+	var idField = "id";
+	var columns=[[
+		{field:'contents',title:'地址 / 文字 / 视频 / 图片', width:150 , formatter:function( v , d , i ){
+			if( node_type == 'focusPic' ){
+				var img = '';
+				var arr = v.split("#");
+				$.each(arr,function(i,n){
+					img += "<img src ='"+arr[i]+"' width='40'  height='40' style='padding:5px'>";
+				});
+				return img ;
+			}else{
+				return v;
+			}
+		}},
+		{field:'operate_time',title:'修改时间',width:50},
+		{field:'text',title:'所属区域',width:50},
+		{field:'status',title:'状态',width:50},
+		{field:'review_msg',title:'驳回原因',width:50}
+	]];	
+	creatDataGrid( selectorDataGrid , pageSize , toolbar , dataGridUrl , idField , columns );
+	
+	var dialogSelector = $('#dialog{$suffix}');
+	
+	
+	function changeVideoFrame(_type){
+		if( _type == 1 || _type == 3 ){
+			$('#IsPageLink{$suffix}').show();
+			if( _type == 3 )
+			$('#showName{$suffix}').html('链接地址');
+			else
+			$('#showName{$suffix}').html('SERVICE ID');
+			$('#IsMovies{$suffix}').hide();
+		}else if( _type == 2 ){
+			$('#IsMovies{$suffix}').show();
+			$('#IsPageLink{$suffix}').hide();
+		}	
+	}
+	
+	function indexType( _type ){
+		if( _type == 'pageLink' || _type == 'marquee' ){
+			$('#IsPageLink{$suffix}').show();
+			if( _type == 'pageLink' ){
+				$('#showName{$suffix}').html('链接地址');
+				$('#IsHtml{$suffix}').show();
+			}
+			else
+			$('#showName{$suffix}').html('输入文字');
+		}else if( _type == 'videoFrame' ){
+			$('#IsvideoFrame{$suffix}').show();
+			$('#IsPageLink{$suffix}').show();
+			$('#showName{$suffix}').html('SERVICE ID');
+		}else if( _type == 'focusPic' ){
+			$('#IsPics{$suffix}').show();
+		}
+	}
+	
+	function homeEdits( _title , _flag ){
+		var rows = gridData['rows'];
+		if( _flag == 1 ){
+			if( rows.length == 1 ){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"数据已存在，请进行修改操作"
+				});							
+				return;				
+			}
+			var id = 0 ;
+		}
+		if( _flag == 3 ){
+			if( rows.length == 0 ){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"当前无数据，不能进行修改操作"
+				});							
+				return;				
+			}
+			if( rows[0].status == '上线' ){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"当前数据已上线，不能进行修改操作"
+				});							
+				return;				
+			}
+			var id = rows[0].id;
+			$('#pageLink{$suffix}').attr( 'value' , rows[0].contents );
+			if( node_type == 'videoFrame' ){
+				var c = rows[0].contents;
+				var b = c.split( '!!' );
+				//$("input:radio[value='"+b[1]+"']").attr("checked",'checked');
+                $('#videoFrame{$suffix}').combobox('setValue', b[1]);
+				$('#pageLink{$suffix}').attr( 'value' , b[0] );
+			}
+			if( node_type == 'focusPic' ){
+				nums = 0;
+				var c = pics = rows[0].contents;
+				pics+='#';
+				var arr = c.split('#');
+				var len = '';
+				$.each( arr , function( i , n ){
+					len+= "<img id='"+nums+"' src='"+arr[i]+"' width='40px' height='40px' style='padding-right:5px' onClick='c("+nums+")' title='点击删除图片' name='"+arr[i]+"' flag='icon'>";
+					nums++;
+				});
+				$('#ShowImg{$suffix}').html( len );
+			}
+		}
+		var width = 420;
+		var height = 200;
+		var iconCls = 'icon-add';
+		var buttons = [
+			{text:'提交',id:'regSubmit',handler:function(){
+				var contents = $('#pageLink{$suffix}').val();
+				if( node_type == 'focusPic' ){
+					contents = pics.substring( 0 , pics.length-1 );
+				}
+				if( contents == ''){
+					$.messager.show({
+						title:"系统提示" , 
+						msg:"数据为空，不可提交"
+					});							
+					return;	
+				}
+				if( node_type == 'videoFrame' ){
+					contents = contents + '!!' + $('#videoFrame{$suffix}').combobox('getValue');;
+				}
+				dialogSelector.dialog('close');
+				var data = { contents : contents , flag : _flag , node_id : node_code , home_type : node_type ,region_id : region_id , is_node : 'n' , id : id };
+				sendData( '__MODULE__/Content/homeEdit' , data , selectorDataGrid );
+			}},
+			{text:'重置',id:'regSet',handler:function(){
+				
+			}}
+		];
+		createDiaLog( dialogSelector , _title , width , height , iconCls , buttons)	;	
+		dialogSelector.dialog('open');
+	}
+	
+	function sendData( _controller , _data , _selector ){
+		$('#Loadings').show();
+		$.post( _controller , _data , function( result ){
+			$.messager.show({
+				title:result.title , 
+				msg:result.message
+			});
+			if ( result.error == 0 ){
+				_selector.datagrid( 'reload');
+			}
+		},'json');	
+	}
+	var nums = 0;
+	var pics = '';
+	// 图片上传插件
+	$('#pics{$suffix}').Huploadify({
+		auto:true,
+		fileTypeExts:'*.jpg;*.gif;*.GIF;*.JPG;*.png;*.PNG',
+		multi:false,
+		removeTimeout:1,
+		uploader:'__CONTROLLER__/picUpload',
+		onUploadSuccess:function( result , file ){
+			var data = eval('(' + file + ')');
+			var pic= data.file_name;
+			nums++;
+			var imgs = "<img id='"+nums+"' src='"+pic+"' width='40px' height='40px' style='padding-right:5px' onClick='c("+nums+")' title='点击删除图片' name='"+pic+"' flag='icon'>";
+			$('#ShowImg{$suffix}').append(imgs);
+			pics += pic+'#';
+		}
+	});
+
+	// 视频上传插件
+	$('#movies{$suffix}').Huploadify({
+		auto:false,
+		fileTypeExts:'*.mp4;*.flv',
+		multi:true,
+		fileSizeLimit:99999999,
+		breakPoints:true,
+		saveInfoLocal:true,
+		showUploadedPercent:true,//是否实时显示上传的百分比，如20%
+		showUploadedSize:true,
+		removeTimeout:1,
+		uploader:'__CONTROLLER__/moviesUpLoad',
+		onUploadSuccess:function(result){
+			$('#pageLink{$suffix}').attr( 'value' , result.name );
+			$('#moviesFile{$suffix}').html( '视频文件名：'+result.name );
+		}
+	});
+	
+	// 网页上传插件
+	$('#html{$suffix}').Huploadify({
+		auto : true,
+		fileTypeExts : '*.htm;*.html',
+		multi : true,
+		uploader : '__CONTROLLER__/htmlUpload',
+		onUploadSuccess : function( result , file ){
+			var data = eval( '(' + file + ')' );
+			$('#pageLink{$suffix}').attr( 'value' , data.file_path );			
+		}
+	});
+	
+	function c(_id){
+		var name = $('#'+_id).attr('name');
+		pics = pics.replace(new RegExp(name+'#'),"");
+		$('#'+_id).remove();
+	}
+	
+	function homePreviews(){
+		return;
+	}
+</script>

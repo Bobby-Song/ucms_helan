@@ -1,0 +1,34 @@
+<div class="easyui-panel" fit=true border=false>
+	<div region="north" border=false style="overflow:hidden;height:300px;text-align:right">
+
+	</div>
+	<div class="easyui-layout" fit=true>
+		<div region='center' border=false>
+			<div id="showTitle{$suffix}">
+				<div id="auditResults{$suffix}" style="width:100%;position:absolute;height:220px;"></div>
+			</div>
+		</div>
+	</div>
+</div>
+<div id='dialog{$suffix}'>
+	<table class='browser'>
+		<tr>
+			<td class='sidebar' colspan="2">请输入8~15位密码</td>
+		<tr>
+		<tr>
+			<td class='label'>初始密码</td>
+			<td><input id="oldPassWord{$suffix}" onpaste="return false;" type="password" name="oldPassWord{$suffix}" style="ime-mode:disabled"  class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span></td>
+		<tr>
+		<tr>
+			<td class='label'>输入新密码</td>
+			<td><input id="newPassWord{$suffix}" onpaste="return false;" type="password" name="newPassWord{$suffix}" style="ime-mode:disabled"  class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span></td>
+		<tr>
+		<tr>
+			<td class='label'>确认新密码</td>
+			<td><input id="aginPassWord{$suffix}" onpaste="return false;" type="password" name="aginPassWord{$suffix}" style="ime-mode:disabled"  class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span></td>
+		<tr>
+	</table>
+</div>
+<script>
+
+</script>

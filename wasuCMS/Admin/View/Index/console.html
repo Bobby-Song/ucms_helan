@@ -1,0 +1,49 @@
+<div class="easyui-panel" fit=true border=false style="background:#F6F6F6">
+	<div region="north" border=false id="console_north">
+		<div id="console_welcome">当前登录用户：{$Think.session.user_name}　权限：{$Think.session.type}</div>
+		<ul id="console_menu">
+			<li>
+				<a href="#" onclick="createDeskTopTab( '模板管理' , 'templateHtml' )"><img src="{$Think.const.IMAGES_PATH}menu_template.png" /></a>
+				<span><a href="#" onclick="createDeskTopTab( '模板管理' , 'templateHtml' )">模板管理</a></span>
+			</li>
+			<li>
+				<a href="#"><img src="{$Think.const.IMAGES_PATH}menu_user.png" /></a>
+				<span><a href="#">用户管理</a></span>
+			</li>
+			<li>
+				<a href="#"><img src="{$Think.const.IMAGES_PATH}menu_home_video.png" /></a>
+				<span><a href="#">首页视频管理</a></span>
+			</li>	
+			<li>
+				<a href="#"><img src="{$Think.const.IMAGES_PATH}menu_parameter.png" /></a>
+				<span><a href="#">参数设置</a></span>
+			</li>	
+			<li>
+                <a href="#" onclick="createDeskTopTab( 'APP管理' , 'appManager' )"><img src="{$Think.const.IMAGES_PATH}app_manage.png" /></a>
+                <span><a href="#" onclick="createDeskTopTab( 'APP管理' , 'appManager' )">APP管理</a></span>
+            </li>
+		</ul>
+	</div>
+	<div region='center' border=false>
+		
+	</div>
+</div>
+<script>
+	//创建桌面TAB
+	function createDeskTopTab( _title , _html ){
+		var tree_tabs=$('#tree_tabs');
+		var tabs=tree_tabs.tabs("tabs");
+		if(tabs.length==2){
+			var onetab = tabs[1];
+			var titles = onetab.panel('options').tab.text();
+			tree_tabs.tabs( "close", titles );
+		}
+		$('#tree_tabs').tabs('add',{
+			title : _title,
+			href : '__MODULE__/Desktop/' + _html,
+			cache : false,
+			closable : true,
+			bodyCls : "pass"
+		});		
+	}
+</script>

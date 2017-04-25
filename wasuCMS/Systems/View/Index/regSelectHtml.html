@@ -1,0 +1,194 @@
+<table id='regionData{$suffix}'></table>
+<div id="regionMenu{$suffix}" class="easyui-menu" style="width:150px;">
+	<div iconCls="icon-edit" onclick="regionDataEdit()">编辑区域图标和简介</div>
+</div>
+
+<div id="regionEwm{$suffix}" class="easyui-menu" style="width:150px;">
+    <div iconCls="icon-edit" onclick="regionDataEdit()">编辑区域二维码</div>
+</div>
+
+<div id="regDialog{$suffix}">
+    <table class='browser'>
+        <tr>
+            <td id="pic{$suffix}" class='label'>
+                <p>区域图标</p>
+                <p style="font-size:10px">推荐分辨率120*120</p>
+            </td>
+            <td>
+                <p id="photo{$suffix}"></p>
+                <p id="ShowImg{$suffix}"></p>
+            </td>
+        </tr>
+
+        <tr id="cont{$suffix}">
+            <td class='label'>内容简介</td>
+            <td>
+                <textarea name="region_desc{$suffix}" id="region_desc{$suffix}" style="width:400px;height:150px;margin-bottom:5px;font-size:12px"></textarea>
+            </td>
+        </tr>
+    </table>
+</div>
+<script>
+    var user_type = '{$user_type}';
+	$('#regionData{$suffix}').treegrid({
+		fit:true,
+		idField:'id',//数据表格要有主键	
+		treeField:'text',//treegrid 树形结构主键 text
+		animate:true,//动画效果
+		fitColumns:true,//自动扩大或缩小列的尺寸以适应表格的宽度并且防止水平滚动
+		rownumbers:false,//显示行号的列
+		url:'__MODULE__/Index/showRegionData',	
+		columns:[[
+			{field:'text',title:'区域名称　[请双击节点进行区域选择，右键进行管理]',width:150} ,
+			{field:'img',title:'区域图标',width:50} ,
+			{field:'id',title:'区域ID',width:50} ,
+			{field:'code',title:'区域编码',width:100} ,
+			{field:'level' , title:'区域级别' , width:100 , formatter:function( v , d , i ){
+				if( v == 0 ) return '省级';
+				if( v == 1 ) return '市级';
+				if( v == 2 ) return '县/区/市级';
+				if( v == 3 ) return '乡镇/街道';
+				if( v == 4 ) return '社区/行政村级';
+			}},
+			{field:'region_desc',title:'区域简介',width:200}
+		]],
+		onDblClickRow : function( r ){
+			if( r.level == 2 ) return;
+			else{ 
+				$.post( '__MODULE__/Index/selectReg' , { id : r.id , code : r.code , text : r.text , level: r.level , pid : r.pid} , function(result){	
+					$.messager.show({
+						title:result.title , 
+						msg:result.message
+					});
+				},'json');					
+			}
+		},
+
+		onContextMenu: function(e,row){
+			e.preventDefault();					//屏蔽浏览器的菜单
+			$(this).treegrid('unselectAll');	//清除所有选中项
+			$(this).treegrid('select', row.id);//选中状态
+			var level = row.level;
+            if (level == 2 && user_type == '内容发布') {
+                $('#regionEwm{$suffix}').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+                $("#pic{$suffix}").html("<p>二维码图片</p><p style='font-size:10px'>推荐分辨率360*360</p>");
+            } else if ((level == 3 || level == 4) && user_type == '内容发布') {
+                $('#regionMenu{$suffix}').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                });
+            } else {
+                return;
+            }
+		}
+	});
+
+    var id;
+    var icon = '';
+    var nu = 100;
+    var nums = 0;
+    var region_desc = '';
+    var code;
+
+    function regionDataEdit(){
+        var gridNode = $('#regionData{$suffix}').treegrid('getSelected');
+        id = gridNode.id;
+        code = gridNode.code;
+
+        var selector = $('#regDialog{$suffix}');
+        $('#region_desc{$suffix}').html( gridNode.region_desc );
+
+        var len = '';
+        icon = gridNode.pic;
+        var icon_arr = icon.split("!!");
+        if( icon_arr.length > 1){
+            icon_arr.pop();
+            $.each(icon_arr,function(i,n){
+                len += "<img id='"+nu+"' src='"+icon_arr[i]+"' width='100px' style='padding-right:5px' onClick='c("+nu+")' title='点击删除图片' name='"+icon_arr[i]+"' flag='icon'>";
+                nu++;
+            });
+        }else{
+            len = "<img id='"+nu+"' src='"+icon_arr[0]+"' width='100px' style='padding-right:5px' onClick='c("+nu+")' title='点击删除图片' name='"+icon_arr[0]+"' flag='icon'>";
+            nu++;
+        }
+        $('#ShowImg{$suffix}').html(len);
+
+        var title =  "编辑" + gridNode.text + "的图标和简介";
+        var width = 600;
+        var height = 400;
+        var iconCls = "icon-edit";
+        var buttons =[
+            {text:'提交',id:'regSubmit',handler:function(){
+                var controller = '__CONTROLLER__/editRegionData';
+                var data = {id:id, code : code,  pic : icon, region_desc: $('#region_desc{$suffix}').val() };
+                sendData( controller , data );
+                selector.dialog('close');
+            }},
+            {text:'重置',id:'regSet',handler:function(){
+                icon = '';
+                $('#ShowImg{$suffix}').html();
+                $('#region_desc{$suffix}').html();
+            }}
+        ];
+        createDiaLog( selector , title , width , height , iconCls , buttons);
+        selector.dialog('open');
+    }
+
+    function sendData( _controller , _data ){
+        $.post( _controller , _data , function(result){
+            $.messager.show({
+                title:result.title ,
+                msg:result.message
+            });
+            if( result.error == 0 ){
+                $('#regionData{$suffix}').treegrid( 'reload');
+            }
+        },'json');
+    }
+
+    $('#photo{$suffix}').Huploadify({
+        auto:true,
+        fileTypeExts:'*.jpg;*.gif;*.GIF;*.JPG;*.png;*.PNG',
+        multi:true,
+        uploader:'__MODULE__/Content/picUpload',
+        onUploadSuccess:function(result,file){
+            var data = eval('(' + file + ')');
+            var pic= data.file_name;
+            nums++;
+            var imgs = "<img id='"+nums+"' src='"+pic+"' width='100px' style='padding-right:5px' onClick='c("+nums+")' title='点击删除图片' name='"+pic+"' flag='icon'>";
+            $('#ShowImg{$suffix}').append(imgs);
+            icon += pic+'!!';
+        }
+    });
+
+
+    function c(_id){
+        var flag = $('#'+_id).attr('flag');
+        var img_name = $('#'+_id).attr('name');
+        var img_path = '..' + img_name;
+        if(flag == 'icon'){
+            icon = icon.replace(new RegExp(img_name+'!!'),"");
+        }
+
+
+        $('#'+_id).remove();
+
+        $.ajax({
+            url: '__CONTROLLER__/unlinkRegionPic',
+            type: 'post',
+            dataType: 'json',
+            data:{img_path:img_path, flag:flag, icon:icon, id:id},
+            async: false,
+            success: function(result){
+                $.messager.show({
+                    title:result.status ,
+                    msg:result.message
+                });
+            }
+        });
+    }
+
+</script>

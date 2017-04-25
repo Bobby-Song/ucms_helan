@@ -1,0 +1,576 @@
+<div class="easyui-panel" fit=true border=false>
+	<div class="easyui-layout" fit=true>
+		<div region='center' border=false>
+			<div class='easyui-panel' fit=true style="padding:3px;">
+				<table class='browser'>
+					<tr>
+						<td class='sidebar' colspan="2">基本信息</td>
+					</tr>
+					<tr>
+						<td class='label'>标题</td>
+						<td><input type='text' id='title{$suffix}' name='title{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span></td>
+						
+					</tr>					
+
+					<tr>
+						<td class='label'>排版样式</td>
+						<td>
+							<select size="1" name="type{$suffix}" class="select" id="type{$suffix}" style="width:150px;">
+							</select>
+						</td>
+					</tr>
+					<tr id="questionAddShow{$suffix}">
+						<td class = 'label'></td>
+						<td id = 'question_add{$suffix}'>
+							<span id='ques_add{$suffix}' style='display:block;width:100px;height:30px;text-align:center;background:#368A04;color:#fff;line-height:30px;cursor:pointer;'>添加问题</span>
+						</td>
+					</tr>
+					<tr id="picsShow{$suffix}">
+						<td class='label'>图片上传</td>
+						<td id="pics{$suffix}">
+						</td>
+					</tr>
+					
+					<tr id="albumShow{$suffix}">
+						<td id = 'album_photo{$suffix}' class = 'label'></td>
+						<td id = 'album_title{$suffix}'>
+
+						</td>
+					</tr>
+					
+					<tr id="videoPathShow{$suffix}">
+						<td class='label'>视频地址</td>
+						<td>
+							<input type='text' id='video_path{$suffix}' name='video_path{$suffix}' class='myInp'>
+						</td>
+						
+					</tr>						
+					<tr id="moviesShow{$suffix}">
+						<td class='label'>视频上传</td>
+						<td>
+							<p id = "movies{$suffix}"></p>
+							<p style ="padding-top:6px" id = "moviesFile{$suffix}"></p>
+						</td>
+					</tr>					
+					<tr id="contentShow{$suffix}">
+						<td class='label'>内容或介绍</td>
+						<td><textarea name="txtContent{$suffix}" id="txtContent{$suffix}" style="width: 100%; height:300px; visibility: hidden;"></textarea></td>
+					</tr>
+					<tr id="stream1{$suffix}">
+						<td class='label'>监控取流地址</td>
+						<td><input id="stream{$suffix}" type="text" name="stream{$suffix}" class="myInp"></td>
+					</tr>
+					<tr id='vsea_u1{$suffix}'>
+						<td class='label'>摄像头账号</td>
+						<td><input type='text' id='vsea_u{$suffix}' name='vsea_u{$suffix}' class='myInp'></td>
+					</tr>
+					<tr id='vsea_p1{$suffix}'>
+						<td class='label'>摄像头密码</td>
+						<td><input type='text' id='vsea_p{$suffix}' name='vsea_p{$suffix}' class='myInp'></td>
+					</tr>
+					
+					
+					<tr id="optionAddShow{$suffix}">
+						<td class = 'label'></td>
+						<td id = 'option_add{$suffix}'>
+							<span id='opt_add{$suffix}' style='display:block;width:100px;height:30px;text-align:center;background:#368A04;color:#fff;line-height:30px;cursor:pointer;'>添加选项</span>
+						</td>
+					</tr>
+					<tr id="optionShow{$suffix}">
+						<td class = 'label'></td>
+						<td id = 'option_content{$suffix}'>
+
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<div region="south" border="false" style="overflow: hidden;height:35px;text-align:center;line-height:35px;margin-top:3px;background:#F2F2F2">
+			<a href="#" class="easyui-linkbutton" id="submits">提交</a>
+			<a href="#" class="easyui-linkbutton" id="resets">重置</a>
+		</div>
+	</div>
+</div>
+<script>
+	var album_p = '';
+	var editor;
+	var consultNums = 0;
+	var questionNums = 0;
+	var questionOptionNums = 0;
+	var consult_delete = '';
+	var urls = '{$Think.const.UPLOAD_PATH}image/';
+	$(function(){
+		$.parser.onComplete = function(){
+			editor = KindEditor.create('textarea[name="txtContent{$suffix}"]', {
+				resizeType: 1,
+				allowPreviewEmoticons: false,
+				uploadJson : '__MODULE__/Content/uploadJson?url='+urls,
+				items: [
+				'fontname', 'fontsize', '|', 'forecolor', 'hilitecolor', 'bold', 'italic', 'underline',
+				'removeformat', '|', 'justifyleft', 'justifycenter', 'justifyright', 'insertorderedlist',
+				'insertunorderedlist', '|', 'image'],
+				allowFileManager : false,
+				pasteType:2,
+				afterCreate : function(){
+					this.sync(); 
+				},
+				afterBlur:function(){
+					this.sync();
+				}   
+			});	
+			$('.ke-edit').css('height', '90%');
+		}
+		$("#submits").bind('click', dataValidation);
+	});
+	
+	// create question type combobox
+	function getType(_id) 
+	{
+		console.log($('#'+_id));
+		$('#'+_id).combobox({
+			data: [{
+				'id': '单选',
+				'text': '单选'
+			},{
+				'id': '多选',
+				'text': '多选'
+			}],
+
+			valueField : 'id',	
+			textField : 'text',
+			ItemHeight : '10',
+			onLoadSuccess:function(){
+				$(this).combobox( 'setValue' , '单选' );
+			}
+		});
+	}
+	
+	$('#type{$suffix}').combobox({
+		url : '__MODULE__/Content/showTmpClass',
+		valueField : 'id',	
+		textField : 'text',
+		onLoadSuccess:function(){
+			if( editsFlag == 3 ) {
+				$(this).combobox( 'setValue' , data_arr[0].type );
+			} else {
+				$(this).combobox( 'setValue' , '图文' );
+			}
+		},
+		onChange : function( n , o ){
+			showFormField( n );
+		}
+	});
+	var id;
+	var nid;
+	var rid;
+	if( editsFlag == 1 ){
+		nid = node_code;
+		rid = region_id;
+		noDisplay();
+		$('#contentShow{$suffix}').show();
+		id = 0 ;
+	}else if( editsFlag == 3 ){
+		id = data_arr[0].id;
+		nid = data_arr[0].node_id;
+		rid = data_arr[0].region_id;
+		showFormField( data_arr[0].type );
+		$('#title{$suffix}').attr( 'value' , data_arr[0].title );
+		$('#txtContent{$suffix}').html( data_arr[0].contents );
+		$('#video_path{$suffix}').attr( 'value' , data_arr[0].video_path );
+		if( data_arr[0].type == '相册' ){
+			var t_arr = data_arr[0].contents.split( '!!' );
+			var p_arr = data_arr[0].path.split( '!!' );
+			$.each( p_arr , function( i , n ){
+				var album_photo = "<img id='"+i+"' src = '"+n+"' width = '80px' height = '40px' style= 'margin-bottom:5px;' onClick='c("+i+")' title='点击删除图片' name='"+n+"' flag='album_photo'><br>";
+				
+				var album_title = "<textarea id='"+i+"Title' name='"+i+"Title' style= 'width:200px;height:40px;margin-bottom:5px;font-size:12px' class='albumTitle'></textarea><br>";
+				$('#album_photo{$suffix}').append( album_photo );
+				$('#album_title{$suffix}').append( album_title );
+				$('#'+i+'Title').html( t_arr[i] );
+				album_p += n + '!!';
+				i++;
+			});	
+		} else if (data_arr[0].type == '无图征询') {
+			$('#option_add{$suffix}').hide();
+			var cont_arr = data_arr[0].options.split( '!!' );
+			$.each( cont_arr , function( j ){
+				var opt_content = "<input id='"+j+"Content' name='"+j+"Content' class='optContent' style= 'width:40%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' class='optContent' readonly='readonly'><br id='"+j+"opt_br'>";
+		
+				$('#option_content{$suffix}').append(opt_content);
+				$('#'+j+'Content').val( cont_arr[j] );
+			});
+		} else if (data_arr[0].type == '有图征询') {
+			$('#option_add{$suffix}').hide();
+			var tit_arr = data_arr[0].contents.split( '@@' );
+			var t_arr = tit_arr[1].split('!!');
+			var c_arr = tit_arr[2].split('!!');
+			var consult_arr = tit_arr[3].split('!!');
+			var p_arr = data_arr[0].path.split( '!!' );
+			var album_photo = '';
+			var album_title = '';
+			
+			$.each( p_arr , function( i , n ){
+				album_photo += "<img id='"+consultNums+"' src = '"+n+"' width = '80px' height = '40px' style= 'margin-bottom:5px;' onClick='c("+consultNums+")' title='点击删除图片' name='"+n+"' flag='album_photo'><br>";
+				
+				album_title += "<textarea id='"+consultNums+"Title' name='"+consultNums+"Title' style= 'width:300px;height:40px;margin-bottom:5px;font-size:12px' class='albumTitle'>"+t_arr[i]+"</textarea>&nbsp;&nbsp;<textarea id='"+consultNums+"Cont' name='"+consultNums+"Cont' style= 'width:300px;height:40px;margin-bottom:5px;font-size:12px' class='albumCont'>"+c_arr[i]+"</textarea><input type='hidden' id='"+consultNums+"Consult' name='"+consultNums+"Consult' value='"+consult_arr[i]+"' class='albumConsult'><br>";		
+				album_p += n + '!!';
+				consultNums++;	
+				
+			});	
+			$('#album_photo{$suffix}').append( album_photo );
+			$('#album_title{$suffix}').append( album_title );
+			var cont_arr = data_arr[0].options.split( '!!' );
+			$.each( cont_arr , function( j ){
+				var opt_content = "<input id='"+j+"Content' name='"+j+"Content' class='optContent' style= 'width:40%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' class='optContent' readonly='readonly'><br id='"+j+"opt_br'>";
+		
+				$('#option_content{$suffix}').append(opt_content);
+				$('#'+j+'Content').val( cont_arr[j] );
+			});
+		} else if (data_arr[0].type == '监控') {
+			var stream_arr = data_arr[0].contents.split( '!!' );
+			$('#stream{$suffix}').attr( 'value' , stream_arr[0] );
+			$('#vsea_u{$suffix}').attr( 'value' , stream_arr[1] );
+			$('#vsea_p{$suffix}').attr( 'value' , stream_arr[2] );
+		} else if (data_arr[0].type == '答题') {
+			var tit_arr = data_arr[0].contents.split( '@@' );
+			var ques_arr;
+			var ques_title = '';
+			var ques_type = '';
+			var ques_answer = '';
+			var ques_opts = '';
+			var ques_id = '';
+			var ques_opt_arr;
+			var ques_opt_a = '';
+			var ques_opt_b = '';
+			var ques_opt_c = '';
+			var ques_opt_d = '';
+			var ques_content = '';
+			$.each(tit_arr, function(i, n){
+				ques_arr = n.split('!!');
+				ques_title = ques_arr[0];
+				ques_type = ques_arr[1];
+				ques_answer = ques_arr[2];
+				ques_opts = ques_arr[3];
+				ques_id = ques_arr[4];
+				ques_opt_arr = ques_opts.split('##');
+				ques_opt_a = ques_opt_arr[0];
+				ques_opt_b = ques_opt_arr[1];
+				ques_opt_c = ques_opt_arr[2];
+				ques_opt_d = ques_opt_arr[3];
+				ques_content = "<div id='"+questionNums+"ques_box'><select size='1' name='"+questionNums+"ques_type' class='ques_type select' id='"+questionNums+"ques_type' style='width:100px;top:10px;'></select>&nbsp;&nbsp;<textarea id='"+questionNums+"Title' name='"+questionNums+"Title' style= 'width:300px;height:40px;margin-bottom:5px;font-size:12px' class='albumTitle' placeholder='请输入标题...'>"+ques_title+"</textarea>&nbsp;&nbsp;<input type='hidden' id='"+questionNums+"ques_id' name='"+questionNums+"ques_id' value='"+ques_id+"' class='ques_id'><img id='"+questionNums+"ques_del' onClick='quesDel("+questionNums+")' style='width:16px;height:16px;cursor:pointer;margin-left:5px;' src='{$Think.const.CF_PATH}themes/icons/cross.png'><input type='text' id='"+questionNums+"standard_answer' class='standardAnswer' style= 'width:10%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' placeholder='请输入正确答案' value='"+ques_answer+"'>&nbsp;&nbsp;<br><input  id='"+questionNums+"_A_Option' name='"+questionNums+"_A_Option' class='quesOptContentA' style= 'width:40%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' placeholder='选项A' value='"+ques_opt_a+"'><br><input  id='"+questionNums+"_B_Option' name='"+questionNums+"_B_Option' class='quesOptContentB' style= 'width:40%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' placeholder='选项B' value='"+ques_opt_b+"'><br><input  id='"+questionNums+"_C_Option' name='"+questionNums+"_C_Option' class='quesOptContentC' style= 'width:40%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' placeholder='选项C' value='"+ques_opt_c+"'><br><input  id='"+questionNums+"_D_Option' name='"+questionNums+"_D_Option' class='quesOptContentD' style= 'width:40%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' placeholder='选项D' value='"+ques_opt_d+"'><br></div>";
+				
+				$('#album_title{$suffix}').append(ques_content);
+				getType(questionNums+'ques_type');
+				$('#'+questionNums+'ques_type').combobox('setValue', ques_type);
+				
+				questionNums ++;
+			})
+		}
+	}
+	
+	function noDisplay(){
+		$('#picsShow{$suffix}').hide();
+		$('#albumShow{$suffix}').hide();
+		$('#optionShow{$suffix}').hide();
+		$('#optionAddShow{$suffix}').hide();
+		$('#videoPathShow{$suffix}').hide();
+		$('#moviesShow{$suffix}').hide();
+		$('#stream1{$suffix}').hide();
+		$('#vsea_u1{$suffix}').hide();
+		$('#vsea_p1{$suffix}').hide();
+		$('#contentShow{$suffix}').hide();
+		$('#questionAddShow{$suffix}').hide();
+	}
+
+	function showFormField( _type ){
+		if( _type == '图文'){
+			noDisplay();
+			$('#contentShow{$suffix}').show();
+		}else if( _type == '监控' ){
+			noDisplay();
+			$('#stream1{$suffix}').show();
+			$('#vsea_u1{$suffix}').show();
+			$('#vsea_p1{$suffix}').show();
+		}else if( _type == '相册' ){
+			noDisplay();
+			$('#picsShow{$suffix}').show();
+			$('#albumShow{$suffix}').show();
+		}else if( _type == '有图征询' ){
+			noDisplay();
+			$('#picsShow{$suffix}').show();
+			$('#albumShow{$suffix}').show();
+			$('#optionShow{$suffix}').show();
+			$('#optionAddShow{$suffix}').show()
+		}else if( _type == '全屏视频' ){
+			noDisplay();
+			$('#videoPathShow{$suffix}').show();
+			$('#moviesShow{$suffix}').show();
+		}else if( _type == '窗口视频' ){
+			noDisplay();
+			$('#videoPathShow{$suffix}').show();
+			$('#moviesShow{$suffix}').show();
+			$('#contentShow{$suffix}').show();
+		}else if ( _type == '无图征询' ) {
+			noDisplay();
+			$('#contentShow{$suffix}').show();
+			$('#optionShow{$suffix}').show();
+			$('#optionAddShow{$suffix}').show();
+		}else if ( _type == '答题' ) {
+			noDisplay();
+			$('#questionAddShow{$suffix}').show();
+			$('#albumShow{$suffix}').show();
+		}
+	}
+	
+
+	
+	//数据验证
+	function dataValidation(){
+		$("#Loadings").show();
+		var editController = '__MODULE__/Content/editData?flag='+editsFlag;
+		var contents = editor.html();
+		var title = $('#title{$suffix}').val();
+		var type = $('#type{$suffix}').combobox('getValue');
+		var video_path = $('#video_path{$suffix}').val();
+		var options = '';
+		var stream = $('#stream{$suffix}').val();
+		var vsea_u = $('#vsea_u{$suffix}').val();
+		var vsea_p = $('#vsea_p{$suffix}').val();
+		if( type == '相册' ){
+			album_p = album_p.substr( 0 , album_p.length - 2 );
+			//album_t = album_t.substr( 0 , album_t.length - 2 );
+			var t = '' ;
+			var lengths = $('.albumTitle').length;
+            if(lengths <= 0){
+                $.messager.show({
+                    title:"系统提示" ,
+                    msg:"相册中图片不能为空"
+                });
+                $("#Loadings").hide();
+                return;
+            }
+			for( var i = 0 ; i < lengths ; i++ ){
+                if(countLen($('.albumTitle').eq(i).val()) > 72){
+                    $.messager.show({
+                        title:"系统提示" ,
+                        msg:"相册标题字数不能超过36个字"
+                    });
+					$("#Loadings").hide();
+                    return;
+                }
+				if( i < lengths - 1 )
+				t += $('.albumTitle').eq(i).val()+'!!';
+				else
+				t += $('.albumTitle').eq(i).val();
+			}
+			contents = album_p + '@@' + t;
+		} else if (type == '无图征询') {
+			var lengths = $('.optContent').length;
+			
+			for( var i = 0 ; i < lengths ; i++ ){
+				if(countLen($('.optContent').eq(i).val()) > 8){
+					$.messager.show({
+						title:"系统提示" ,
+						msg:"选项字数不能超过4个字"
+					});
+					$("#Loadings").hide();
+					return;
+				}
+				if( i < lengths - 1 )
+				options += $('.optContent').eq(i).val()+'!!';
+				else
+				options += $('.optContent').eq(i).val();
+			}
+		} else if (type == '有图征询') {
+			album_p = album_p.substr( 0 , album_p.length - 2 );
+			//album_t = album_t.substr( 0 , album_t.length - 2 );
+			var t = '' ;
+			var cont = '';
+			var consult = '';
+			var lengths = $('.albumTitle').length;
+			
+			for( var i = 0 ; i < lengths ; i++ ){
+				if( i < lengths - 1 ) {	
+					t += $('.albumTitle').eq(i).val()+'!!';
+					cont += $('.albumCont').eq(i).val()+'!!';
+					if ($('.albumConsult').eq(i).val() != '') {
+						consult += $('.albumConsult').eq(i).val()+'!!';
+					} else {
+						consult += '0!!';
+					}
+					
+				} else {
+					t += $('.albumTitle').eq(i).val();
+					cont += $('.albumCont').eq(i).val();
+					if ($('.albumConsult').eq(i).val() != '') {
+						consult += $('.albumConsult').eq(i).val();
+					} else {
+						consult += '0';
+					}
+				}
+			}
+			contents = album_p + '@@' + t + '@@' + cont + '@@' + consult;
+			
+			var opt_lengths = $('.optContent').length;
+			for( var j = 0 ; j < opt_lengths ; j++ ){
+                if(countLen($('.optContent').eq(j).val()) > 8){
+                    $.messager.show({
+                        title:"系统提示" ,
+                        msg:"选项字数不能超过4个j字"
+                    });
+                    $("#Loadings").hide();
+                    return;
+                }
+				if( j < opt_lengths - 1 )
+				options += $('.optContent').eq(j).val()+'!!';
+				else
+				options += $('.optContent').eq(j).val();
+			}
+		} else if (type == '监控') {
+			contents = stream+'!!'+vsea_u+'!!'+vsea_p;
+		} else if (type == '答题') {
+			var lengths = $('.albumTitle').length;
+			contents = '';
+			var ques_opts = '';
+			for( var i = 0 ; i < lengths ; i++ ){
+			ques_opts = $('.quesOptContentA').eq(i).val()+'##'+$('.quesOptContentB').eq(i).val()+'##'+$('.quesOptContentC').eq(i).val()+'##'+$('.quesOptContentD').eq(i).val();
+				
+				if( i < lengths - 1 ) {
+					contents += $('.albumTitle').eq(i).val()+'!!'+$('.ques_type').eq(i).combobox('getValue')+'!!'+$('.standardAnswer').eq(i).val()+'!!'+ques_opts+'!!'+$('.ques_id').eq(i).val()+'@@';
+				} else {
+					contents += $('.albumTitle').eq(i).val()+'!!'+$('.ques_type').eq(i).combobox('getValue')+'!!'+$('.standardAnswer').eq(i).val()+'!!'+ques_opts+'!!'+$('.ques_id').eq(i).val();
+				}
+			}
+		}
+		var editData = {
+			id : id ,
+			contents : contents ,
+			title : title , 
+			video_path : video_path , 
+			node_id : nid , 
+			region_id : rid ,
+			type : type ,
+			options : options,
+			node_type : node_type,
+			consult_delete : consult_delete
+		};
+		if( title == '' || ( contents == '' && video_path == '' ) ){
+			$.messager.show({
+				title:"系统提示" , 
+				msg:"标题为空或内容与视频不能同时为空"
+			});
+			$("#Loadings").hide();
+            return;
+		}else if((type == '无图征询' || type == '有图征询') && options == ''){
+			$.messager.show({
+				title:"系统提示" , 
+				msg:"征询类选项不能为空"
+			});
+			$("#Loadings").hide();
+            return;
+		}
+		sendContent( editController , editData );
+	}
+	
+
+	
+	// 相册上传插件
+	$('#pics{$suffix}').Huploadify({
+		auto:true,
+		fileTypeExts:'*.jpg;*.gif;*.GIF;*.JPG;*.png;*.PNG',
+		multi:false,
+		removeTimeout:1,
+		uploader:'__CONTROLLER__/picUpload',
+		onUploadSuccess:function( result , file ){
+			var data = eval('(' + file + ')');
+			var pic = data.file_name;
+			var t = $('#type{$suffix}').combobox( 'getValue' );
+			var album_photo = "<img id='"+consultNums+"' src = '"+pic+"' width = '80px' height = '40px' style= 'margin-bottom:5px;' onClick='c("+consultNums+")' title='点击删除图片' name='"+pic+"' flag='album_photo'><br>";
+			if (t == '有图征询') {
+				var album_title = "<textarea id='"+consultNums+"Title' name='"+consultNums+"Title' style= 'width:300px;height:40px;margin-bottom:5px;font-size:12px' class='albumTitle'>标题</textarea>&nbsp;&nbsp;<textarea id='"+consultNums+"Cont' name='"+consultNums+"Cont' style= 'width:300px;height:40px;margin-bottom:5px;font-size:12px' class='albumCont'>内容</textarea><input type='hidden' id='"+consultNums+"Consult' name='"+consultNums+"Consult' value='' class='albumConsult'><br>";
+			} else if (t == '相册') {
+				var album_title = "<textarea id='"+consultNums+"Title' name='"+consultNums+"Title' style= 'width:200px;height:40px;margin-bottom:5px;font-size:12px' class='albumTitle'></textarea><br>";
+			}
+			$('#album_photo{$suffix}').append(album_photo);
+			$('#album_title{$suffix}').append(album_title);
+			album_p += pic + '!!' ;
+			consultNums++;
+		}
+	});
+
+	// 视频上传插件
+	$('#movies{$suffix}').Huploadify({
+		auto:true,
+		fileTypeExts:'*.mp4;*.flv',
+		multi:true,
+		fileSizeLimit:99999999,
+		breakPoints:true,
+		saveInfoLocal:true,
+		showUploadedPercent:true,//是否实时显示上传的百分比，如20%
+		showUploadedSize:true,
+		removeTimeout:1,
+		uploader:'__CONTROLLER__/moviesUpLoad',
+		onUploadSuccess:function(result){
+			$('#video_path{$suffix}').attr( 'value' , result.name );
+			$('#moviesFile{$suffix}').html( '视频文件名：'+result.name );			
+		}
+	});	
+	
+	// 点击添加征询选项
+	var optNums = 0;
+	$('#opt_add{$suffix}').click(function(){
+		var opt_content = "<input id='"+optNums+"Content' name='"+optNums+"Content' class='optContent' style= 'width:40%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' class='optContent'><img id='"+optNums+"opt_del' onClick='optDel("+optNums+")' style='width:16px;height:16px;cursor:pointer;margin-left:5px;' src='{$Think.const.CF_PATH}themes/icons/cross.png'><br id='"+optNums+"opt_br'>";
+		
+		$('#option_content{$suffix}').append(opt_content);
+		optNums ++;
+	})
+	
+	// 点击添加问题
+	$('#ques_add{$suffix}').click(function(){
+		var ques_content = "<div id='"+questionNums+"ques_box'><select size='1' name='"+questionNums+"ques_type' class='ques_type select' id='"+questionNums+"ques_type' style='width:100px;top:10px;'></select>&nbsp;&nbsp;<textarea id='"+questionNums+"Title' name='"+questionNums+"Title' style= 'width:300px;height:40px;margin-bottom:5px;font-size:12px' class='albumTitle' placeholder='请输入标题...'></textarea>&nbsp;&nbsp;<input type='hidden' id='"+questionNums+"ques_id' name='"+questionNums+"ques_id' value='' class='ques_id'><img id='"+questionNums+"ques_del' onClick='quesDel("+questionNums+")' style='width:16px;height:16px;cursor:pointer;margin-left:5px;' src='{$Think.const.CF_PATH}themes/icons/cross.png'><input type='text' id='"+questionNums+"standard_answer' class='standardAnswer' style= 'width:10%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' placeholder='请输入正确答案'>&nbsp;&nbsp;<br><input  id='"+questionNums+"_A_Option' name='"+questionNums+"_A_Option' class='quesOptContentA' style= 'width:40%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' placeholder='选项A'><br><input  id='"+questionNums+"_B_Option' name='"+questionNums+"_B_Option' class='quesOptContentB' style= 'width:40%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' placeholder='选项B'><br><input  id='"+questionNums+"_C_Option' name='"+questionNums+"_C_Option' class='quesOptContentC' style= 'width:40%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' placeholder='选项C'><br><input  id='"+questionNums+"_D_Option' name='"+questionNums+"_D_Option' class='quesOptContentD' style= 'width:40%;height:20px;margin-bottom:5px;font-size:12px;border:1px solid #5db1e5;background-image(../images/input_bg.gif)' placeholder='选项D'><br></div>";
+		$('#album_title{$suffix}').append(ques_content);
+		
+		getType(questionNums+'ques_type');
+		
+		questionNums ++;
+	})
+	
+	
+	
+	
+	// 点击删除征询选项
+	function optDel(_num) {
+		$('#'+_num+'Content').remove();
+		$('#'+_num+'opt_del').remove();
+		$('#'+_num+'opt_br').remove();
+	}
+	
+	// 点击删除问题
+	function quesDel(_num) {
+		consult_delete += $('#'+_num + 'ques_id').val()+'_';
+		$('#'+_num+'ques_box').remove();
+	}
+
+	function c(_id){
+		var name = $('#'+_id).attr('name');
+		album_p = album_p.replace(new RegExp(name+'!!'),"");
+		$('#'+_id).remove();
+		$('#'+_id + 'Title').remove();
+		$('#'+_id + 'Cont').remove();
+		consult_delete += $('#'+_id + 'Consult').val()+'_';
+		$('#'+_id + 'Consult').remove();
+	}
+
+	function countLen(_str) {
+		var len = 0;
+		for (var i = 0; i< _str.length; i++) {
+			if (_str.charCodeAt(i) > 127 || _str.charCodeAt(i) == 94) {
+				len += 2;
+			} else {
+				len ++;
+			}
+		}
+		return len;
+	}
+
+</script>

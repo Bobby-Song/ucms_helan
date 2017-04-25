@@ -1,0 +1,303 @@
+<div class="easyui-panel" fit=true border=false>
+	<div region="north" border=false id="console_north">
+		<div id="console_welcome">当前登录用户：{$Think.session.user_name}　权限：{$Think.session.type}</div>
+		<ul id="console_menu">
+			<li>
+				<a href="#"><img src="{$Think.const.IMAGES_PATH}menu_template.png" /></a>
+				<span><a href="#">模板管理</a></span>
+			</li>
+			<li>
+				<a href="#" onclick="createDeskTopTab( '用户管理' , 'userHtml' )"><img src="{$Think.const.IMAGES_PATH}menu_user.png" /></a>
+				<span><a href="#" onclick="createDeskTopTab( '用户管理' , 'userHtml' )">用户管理</a></span>
+			</li>
+			<li>
+				<a href="#" onclick="createDeskTopTab( '区域选择' , 'regSelectHtml' )"><img src="{$Think.const.IMAGES_PATH}menu_home_video.png" /></a>
+				<span><a href="#" onclick="createDeskTopTab( '区域选择' , 'regSelectHtml' )">区域选择</a></span>
+			</li>
+			<li>
+				<a href="#" onclick="createDeskTopTab( '栏目管理' , 'tvNodeManageHtml' )"><img src="{$Think.const.IMAGES_PATH}node.png" /></a>
+				<span><a href="#" onclick="createDeskTopTab( '栏目管理' , 'tvNodeManageHtml' )">栏目管理</a></span>
+			</li>
+			<li>
+				<a href="#" onclick="createDeskTopTab( '栏目权限' , 'appNodePermissionHtml' )"><img src="{$Think.const.IMAGES_PATH}node_permission.png" /></a>
+				<span><a href="#" onclick="createDeskTopTab( '栏目权限' , 'appNodePermissionHtml' )">栏目权限</a></span>
+			</li>
+			<li>
+				<a href="#" onclick="createDeskTopTab( '参数设置' , 'parameterHtml' )"><img src="{$Think.const.IMAGES_PATH}menu_parameter.png" /></a>
+				<span><a href="#" onclick="createDeskTopTab( '参数设置' , 'parameterHtml' )">参数设置</a></span>
+			</li>
+			<li>
+				<a href="#" onclick="createDeskTopTab( 'APP图标管理' , 'appNodeIcon' )"><img src="{$Think.const.IMAGES_PATH}app_manage.png" /></a>
+				<span><a href="#" onclick="createDeskTopTab( 'APP图标管理' , 'appNodeIcon' )">APP管理</a></span>
+			</li>
+			<li>
+				<a href="#"><img src="{$Think.const.IMAGES_PATH}wechat_manage.png" /></a>
+				<span><a href="#">微信管理</a></span>
+			</li>
+			<li>
+				<a href="#" onclick="createDeskTopTab( '移动端用户区域审核' , 'appUserRegionHtml' )"><img src="{$Think.const.IMAGES_PATH}user_audit.png" /></a>
+				<span><a href="#" onclick="createDeskTopTab( '移动端用户区域审核' , 'appUserRegionHtml' )">用户审核</a></span>
+			</li>
+            <li>
+                <a href="#" onclick="createDeskTopTab( '应急广播审核' , 'emergencyBroadcastHtml' )"><img src="{$Think.const.IMAGES_PATH}broadcast.png" /></a>
+                <span><a href="#" onclick="createDeskTopTab( '应急广播审核' , 'emergencyBroadcastHtml' )">应急广播</a></span>
+            </li>
+		</ul>
+	</div>
+	<div class="easyui-layout" fit=true>
+		<div region='center' border=false>
+			<table id='promptDataGrid{$suffix}' ></table>
+		</div>
+	</div>
+</div>
+<div id='dialogs{$suffix}'></div>
+
+<script>
+	$(function(){
+		$('#dialogs{$suffix}').html( chang_pw_html );
+		$.post('__MODULE__/User/passwordVerify',function(result){
+			if(result==0){
+				changePw( '__MODULE__/User/changePassWord' , '__CONTROLLER__/exitSystem' , $('#dialogs{$suffix}') , 0 );
+			}
+		},'text');		
+	});
+
+	var promptType = '{$type}';
+	var data_arr;
+	var selectorDataGrid = $('#promptDataGrid{$suffix}');
+	var controllerAuditHtml = "__MODULE__/Content/auditHtml"; //审核页面地址
+	var editHtml = "__MODULE__/Content/editHtml";//编辑页面地址
+
+	function buildColumnsAndtoolbar(){
+		var columns;
+		var toolbar;
+		if( promptType == '操作员' ){
+			columns = [[
+				{field:'title',title:'标题',width:120},
+				{field:'type',title:'内容类型',width:30},
+				{field:'region_name',title:'所属区域',width:30},
+				{field:'operate_time',title:'提交时间',width:80},
+				{field:'audit_time',title:'审核驳回时间',width:80},
+				{field:'release_time',title:'发布驳回时间',width:80},
+                {field:'status',title:'状态',width:50,styler:function( v , d , r ){
+                    if( v == '待审核' ){
+                        return 'color:#36C1DD;font-weight:bold';
+                    }else if( v == '已审核' ){
+                        return 'color:#4FB83A;font-weight:bold';
+                    }else if( v == '驳回' ){
+                        return 'color:#F95809;font-weight:bold';
+                    }else if( v == '上线' ){
+                        return 'color:#8B09F9;font-weight:bold';
+                    }else if( v == '下线' ){
+                        return 'color:#F99609;font-weight:bold';
+                    }
+                }},
+				{field:'review_msg',title:'驳回意见',width:100},
+				{field:'user_src',title:'信息来源',width:50}
+			]];
+			toolbar = [{
+				text:'内容驳回'		
+				},"-",{
+				id:'btnAdd',
+				text:'修改',
+				iconCls:'icon-add',
+				handler:function(){
+                    var dataArr = selectorDataGrid.datagrid('getSelections');
+					if (dataArr[0].status == '已审核' || dataArr[0].status == '上线') {
+                        $.messager.show({
+                            title:"系统提示" ,
+                            msg:"已审核/上线的内容无法编辑"
+                        });
+                        //$("#Loadings").hide();
+                        return;
+                    }
+					edits('修改内容',3);
+				}},"-",{
+				id:'btnSearch',
+				text:'预览',
+				iconCls:'icon-search',
+				handler:function(){
+					previews(selectorDataGrid);
+				}},"-",{
+				id:'btnRefresh',
+				text:'刷新',
+				iconCls:'icon-reload',
+				handler:function(){
+					$('#promptDataGrid{$suffix}').datagrid('reload');
+				}}
+			];
+		}else if( promptType == '内容审核' ){
+			columns = [[
+				{field:'title',title:'标题',width:120},
+				{field:'type',title:'内容类型',width:30},
+				{field:'region_name',title:'所属区域',width:30},
+				{field:'operate_time',title:'修改时间',width:80},
+                {field:'status',title:'状态',width:50,styler:function( v , d , r ){
+                    if( v == '待审核' ){
+                        return 'color:#36C1DD;font-weight:bold';
+                    }else if( v == '已审核' ){
+                        return 'color:#4FB83A;font-weight:bold';
+                    }else if( v == '驳回' ){
+                        return 'color:#F95809;font-weight:bold';
+                    }else if( v == '上线' ){
+                        return 'color:#8B09F9;font-weight:bold';
+                    }else if( v == '下线' ){
+                        return 'color:#F99609;font-weight:bold';
+                    }
+                }},
+                {field:'user_src',title:'信息来源',width:50}
+			]];
+			toolbar = [{
+				text:'待审核内容'		
+				},"-",{
+				id:'btnAdd',
+				text:'审核',
+				iconCls:'icon-add',
+				handler:function(){
+					audits('内容审核','con_auditor');
+				}},"-",{
+				id:'btnSearch',
+				text:'预览',
+				iconCls:'icon-search',
+				handler:function(){
+                    var dataArr = selectorDataGrid.datagrid('getSelections');
+                    if (dataArr[0].user_src == 'mobile') {
+                        $.messager.show({
+                            title:"系统提示" ,
+                            msg:"手机端添加的内容暂时无法预览"
+                        });
+                        return;
+                    }
+
+                    if (dataArr[0].home_type == 'marquee' || dataArr[0].home_type == 'pageLink') {
+                        $.messager.show({
+                            title:"系统提示" ,
+                            msg:"滚动字幕/点播电视/直播电视不支持预览"
+                        });
+                        return;
+                    }
+
+					previews(selectorDataGrid);
+				}},"-",{
+				id:'btnRefresh',
+				text:'刷新',
+				iconCls:'icon-reload',
+				handler:function(){
+					$('#promptDataGrid{$suffix}').datagrid('reload');
+				}}
+			];
+		}else if( promptType == '内容发布' ){
+			columns = [[
+				{field:'title',title:'标题',width:120},
+				{field:'type',title:'内容类型',width:30},
+				{field:'region_name',title:'所属区域',width:30},
+				{field:'operate_time',title:'修改时间',width:80},
+				{field:'audit_time',title:'审核时间',width:80},
+                {field:'status',title:'状态',width:50,styler:function( v , d , r ){
+                    if( v == '待审核' ){
+                        return 'color:#36C1DD;font-weight:bold';
+                    }else if( v == '已审核' ){
+                        return 'color:#4FB83A;font-weight:bold';
+                    }else if( v == '驳回' ){
+                        return 'color:#F95809;font-weight:bold';
+                    }else if( v == '上线' ){
+                        return 'color:#8B09F9;font-weight:bold';
+                    }else if( v == '下线' ){
+                        return 'color:#F99609;font-weight:bold';
+                    }
+                }},
+                {field:'user_src',title:'信息来源',width:50}
+			]];
+			toolbar = [{
+				text:'待发布内容'		
+				},"-",{
+				id:'btnAdd',
+				text:'发布',
+				iconCls:'icon-add',
+				handler:function(){
+					audits('内容发布','con_release');				
+				}},"-",{
+				id:'btnSearch',
+				text:'预览',
+				iconCls:'icon-search',
+				handler:function(){
+                    var dataArr = selectorDataGrid.datagrid('getSelections');
+                    if (dataArr[0].user_src == 'mobile') {
+                        $.messager.show({
+                            title:"系统提示" ,
+                            msg:"手机端添加的内容暂时无法预览"
+                        });
+                        //$("#Loadings").hide();
+                        return;
+                    }
+
+                    if (dataArr[0].home_type == 'marquee' || dataArr[0].home_type == 'pageLink') {
+                        $.messager.show({
+                            title:"系统提示" ,
+                            msg:"滚动字幕/点播电视/直播电视不支持预览"
+                        });
+                        return;
+                    }
+
+                    previews(selectorDataGrid);
+				}},"-",{
+				id:'btnRefresh',
+				text:'刷新',
+				iconCls:'icon-reload',
+				handler:function(){
+					$('#promptDataGrid{$suffix}').datagrid('reload');
+				}}
+			];		
+		}
+		return {columns:columns,toolbar:toolbar};
+	}
+	var prompt_arr = buildColumnsAndtoolbar();
+	$('#promptDataGrid{$suffix}').datagrid({
+		idField : 'id',
+		url: '__MODULE__/Index/prompt',
+		fit: true,
+		fitColumns:true,
+		rownumbers:true,
+		frozenColumns:[[
+			{field:'chek',checkbox:true}
+		]],
+		columns : prompt_arr['columns'],
+		toolbar : prompt_arr['toolbar']
+	});	
+	//创建桌面TAB
+	function createDeskTopTab( _title , _html ){
+	    //alert(_html);
+		
+		if( promptType != '内容发布' ){
+			if( _title != '区域选择' ){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"您无此权限"
+				});
+				return;
+			}
+			if( code != 0 ){
+				$.messager.show({
+					title:"系统提示" , 
+					msg:"您的区域属性已经限定为"+code_name
+				});
+				return;
+			}
+		}
+
+		var tree_tabs=$('#tree_tabs');
+		var tabs=tree_tabs.tabs("tabs");
+		if(tabs.length==2){
+			var onetab = tabs[1];
+			var titles = onetab.panel('options').tab.text();
+			tree_tabs.tabs( "close", titles );
+		}
+		$('#tree_tabs').tabs('add',{
+			title : _title,
+			href : '__MODULE__/Index/' + _html,
+			cache : false,
+			closable : true,
+			bodyCls : "pass"
+		});		
+	}
+</script>

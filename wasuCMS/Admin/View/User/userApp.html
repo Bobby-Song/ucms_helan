@@ -1,0 +1,60 @@
+<table id='dataGrid{$suffix}'></table>
+<div id="toolbar{$suffix}" style="padding:2px 0">
+    <table cellpadding="0" cellspacing="0" style="width:100%">
+        <tr>
+            <td style="padding-left:2px">
+                <a href="#" class="easyui-linkbutton" iconCls="icon-forbidden" plain="true" onClick="userForbidden()">封禁/启用</a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<script>
+    var gridData = {};
+    var selectorDataGrid = $('#dataGrid{$suffix}'); //datagrid 组件选择器
+    var pageSize=18; //datagrid 默认显示行数
+    var toolbar = "#toolbar{$suffix}"; //工具条
+    var dataGridUrl = '__MODULE__/User/getAppUser';
+    var idField = "id";
+    var columns=[[
+        {field:'id',hidden:true},
+        {field:'name',title:'姓名',width:40},
+        {field:'nickname',title:'昵称',width:40},
+        {field:'email',title:'邮箱',width:60},
+        {field:'address',title:'地址',width:80},
+        {field:'phone',title:'电话',width:50},
+        {field:'status',title:'状态',width:30,formatter:function(val){
+            return val == '1' ? '启用' : '封禁';
+        }}
+    ]];
+    
+    creatDataGrid( selectorDataGrid , pageSize , toolbar , dataGridUrl , idField , columns );
+    
+    function userForbidden(){
+	    var sel = selectorDataGrid.datagrid("getSelections");
+	    console.log(sel);
+	    if(sel.length != 1){
+		    $.messager.alert("温馨提示", "请选择一条数据进行操作");
+		    return;
+	    }
+	    
+	    var tip = sel[0].status == 1 ? '封禁' : '启用';
+	    
+	    $.messager.confirm("警告", "是否"+tip+"选中的用户", function(b){
+		    if(b){
+			    $.ajax({
+				    url: "__CONTROLLER__/modifyUserStatus/id/"+sel[0].id,
+				    dataType: 'json',
+				    success:function(ret){
+					    if(ret.code == 0){
+						    $.messager.alert('温馨提示', '操作成功');
+						    selectorDataGrid.datagrid("reload");
+					    }else{
+						    $.messager.alert('温馨提示', ret.desc);
+					    }
+				    }
+			    });
+		    }
+	    })
+    }
+</script>

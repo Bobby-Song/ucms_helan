@@ -1,0 +1,87 @@
+        * {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        body {
+            background: #fff;
+            font: normal 12px/22px 微软雅黑;
+        }
+        img {
+            border: 0;
+        }
+        a {
+            text-decoration: none;
+            color: #333;
+        }
+        /* 本例子css */
+        .slideBox {
+            width: 1002px;
+            height: 440px;
+            overflow: hidden;
+            margin:0px auto;
+            margin-top:100px;
+            position: relative;
+        }
+        .slideBox .hd {
+            height: 15px;
+            overflow: hidden;
+            position: absolute;
+            right: 480px;
+            bottom: 5px;
+            z-index: 1;
+        }
+        .slideBox .hd ul {
+            overflow: hidden;
+            zoom: 1;
+            float: left;
+        }
+        .slideBox .hd ul li {
+            float: left;
+            margin-right: 4px;
+            width: 12px;
+            height: 12px;
+            line-height: 14px;
+            text-align: center;
+            background: #fff;
+            cursor: pointer;
+            -moz-border-radius: 15px;      /* Gecko browsers */
+            -webkit-border-radius: 15px;   /* Webkit browsers */
+            border-radius:15px;            /* W3C syntax */
+        }
+        .slideBox .hd ul li.on {
+            background: #3f93e1;
+            color: #fff;
+        }
+        .slideBox .bd {
+            position: relative;
+            height: 100%;
+            z-index: 0;
+        }
+        .slideBox .bd li {
+            text-indent:-100em;
+            zoom: 1;
+            vertical-align: middle;
+        }
+        .slideBox .bd img {
+            width: 1002px;
+            height: 440px;
+            display: block;
+        }
+        .error{color: red}
+        .disabled{
+            background-image: none;
+            color: rgba(0, 0, 0, 0.5);
+            cursor: default;
+            pointer-events:none;
+        }
+        #Button1{
+            background:url(../images/btn.jpg);
+            width:118px;
+            height:28px;
+            padding:0;
+            color:#FFF;
+            line-height:28px;
+            border:none;
+            cursor: pointer
+        }

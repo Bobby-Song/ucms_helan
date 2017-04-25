@@ -1,0 +1,319 @@
+<table id='datagrid{$suffix}'></table>
+<div id="equipmentManage-toolbar{$suffix}" style="padding:2px 0">
+	<table cellpadding="0" cellspacing="0" style="width:100%">
+		<tr>
+			<td style="padding-left:2px">
+				<a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onClick="userEdits('新增',1)">新增</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-remove" plain="true" onClick="userEdits('停用',2)">停用</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onClick="userEdits('修改',3)">修改</a>
+				<span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+				<a href="#" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onClick="userEdits('恢复',5)">恢复</a>
+			</td>
+			<td style="text-align:right;padding-right:2px">
+				<input id="serchboxs{$suffix}" menu="#mm"></input>
+			</td>
+		</tr>
+	</table>
+</div>
+<div id="mm" style="width:100px">  
+	<div name="user_name" iconCls="icon-application-view-list">按用户名</div>  
+</div>
+<div id="dialog{$suffix}">
+	<table class='browser'>
+		<tr>
+			<td class='label'>用户名称</td>
+			<td>
+				<input type='text' id='name{$suffix}' name='name{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+			</td>
+		</tr>
+		<tr>
+			<td class='label'>角色类型</td>
+			<td>
+				<select size="1" name="type{$suffix}" class="select" id="type{$suffix}" style="width:150px;">
+				</select>
+			</td>
+		</tr>
+		<tr id="permissionsDisplay">
+			<td class='label'>操作权限</td>
+			<td>
+				<select size="1" name="permissions{$suffix}" class="select" id="permissions{$suffix}" style="width:300px;">
+				</select>
+			</td>
+		</tr>
+		<tr id="regDisplay">
+			<td class='label'>区域选择</td>
+			<td>
+				<select size="1" name="reg{$suffix}" class="select" id="reg{$suffix}" style="width:300px;">
+				</select>
+			</td>
+		</tr>
+	</table>
+</div>
+<script>
+	var controllerHtml="__MODULE__/Information/editHtml";
+	var controllerAuditHtml="__MODULE__/Information/auditHtml";
+	var controllerDelets="__MODULE__/Information/deletes";
+	var controllerLineMove="__MODULE__/Information/lineMove";
+	var controllerTopMove="__MODULE__/Information/topMove";
+	var controllerAudits="__MODULE__/Information/audits";
+	var controllerOnOrDownLine="__MODULE__/Information/onOrDownLine";
+	
+	var siteUrl="{$Think.const.SITE_URL}pdcms/";
+	var videosUrl="{$Think.const.SITE_URL}movies/";
+	var data_arr;
+	var editsFlag;
+	var editsTitle;
+	var auditType;
+	var types=0;
+
+	regId=0;
+	regNodeId=0;
+	var selector=$('#datagrid{$suffix}');
+	var selectorTree=$('#allPersonTreeDep{$suffix}');
+	var selectorSearBox=$('#serchboxs{$suffix}');
+	var selectorConManage=$('#conManage{$suffix}');
+	
+	
+	var pageSize=18;
+	var toolbar="#equipmentManage-toolbar{$suffix}";
+	var url='__CONTROLLER__/userView';
+	var idField="user_id";
+	var columns=[[
+		{field:'user_name',title:'用户名称',width:30},
+		{field:'user_type',title:'角色类型',width:50,formatter:function(v,d,i){
+			var s;
+			switch(v){
+				case '1':
+				s="全版块操作员";
+				break;
+				case '2':
+				s="系统总监";
+				break;
+				case '3':
+				s="系统审核";
+				break;
+				case '4':
+				s="系统发布";
+				break;
+				case '5':
+				s="版块操作员";
+				break;
+			}
+			return s;
+		}},
+		{field:'permissions',title:'操作权限',width:100,formatter:function(v,d,i){
+			return permissionsName(v);
+		}},
+		{field:'user_delstate',title:'状态',width:20,formatter:function(v,d,i){
+			if(v=='false'){
+				return s="正常";
+			}else{
+				s="停用";
+				return "<span style='color:red'>"+s+"</span>";
+			}
+			
+		}}
+	]];
+	creatDataGrid(selector,pageSize,toolbar,url,idField,columns);
+	function permissionsName(_v){
+		if(_v==0){
+			_v="[角色内全部权限]";
+		}else{
+			var arr=_v.split("##");
+			if(arr.length==1){
+				_v="[可操作栏目ID:"+arr[0]+"]";
+			}else{
+				_v="[可操作栏目ID:"+arr[0]+"][可操作区域ID:"+arr[1]+"]";
+			}
+		}
+		return _v;
+	}
+	
+	function userEdits(_title,_flag){
+		var arr = selector.datagrid('getSelections');
+		var user_id=0;		
+		if(_flag==1 || _flag==3){
+			$('#dialog{$suffix}').dialog({
+				modal : true,
+				title : _title,
+				width : 580,
+				height : 230,
+				iconCls : _flag==1?"icon-add":"icon-edit",
+				maximizable : true,
+				closed : true,
+				cache : false,
+				bodyCls : "pass",
+				buttons : [
+					{text:'提交',id:'regSubmit',handler:function(){
+						var user_type=$('#type{$suffix}').combogrid("getValue");
+						var user_permissions=$('#permissions{$suffix}').combotree("getValues");
+						var user_reg=$('#reg{$suffix}').combotree("getValue");
+						var str="";
+						for(var i=0;i<user_permissions.length;i++){
+							str+=user_permissions[i]+',';
+						}
+						user_permissions=str.substr(0,str.length-1);
+						var user_name=$('#name{$suffix}').val();
+						if(user_type==5){
+							if(user_permissions==""){
+								$.messager.show({
+									title: "系统提示", 
+									msg: "版块操作员需选择操作权限"
+								});
+								return;
+							}
+						}
+						if(user_name==""){
+							$.messager.show({
+								title: "系统提示", 
+								msg: "用户名不能为空"
+							});
+							return;
+						}
+						$.post('__CONTROLLER__/userEdit',{
+							user_id:user_id,user_type:user_type,user_permissions:user_permissions,user_reg:user_reg,flag:_flag,user_name:user_name
+						},function(result){
+							$.messager.show({
+								title:result.status , 
+								msg:result.message
+							});
+							if(result.error!=0){
+								$('#permissions{$suffix}').combotree("setValues",[]);
+								$('#dialog{$suffix}').dialog('close');
+								selector.datagrid('reload');
+							}
+						},'json');						
+					}},
+					{text:'重置',id:'regSubmit',handler:function(){
+					}}
+				]
+			});
+			if(_flag==3){
+				user_id=arr[0].user_id;				
+				if(arr.length!=1){
+					$.messager.show({
+						title: "系统提示", 
+						msg: "请选择一条记录修改"
+					});
+					return;
+				}
+				var permissions=arr[0]['permissions'];
+				$('#name{$suffix}').attr("value",arr[0].user_name);
+				$('#type{$suffix}').combogrid("setValue",arr[0]['user_type']);
+				if(permissions!=0){
+					permissions=permissions.split("##");
+					perm=permissions[0].split(",");
+					if(permissions.length==1)
+						$('#permissions{$suffix}').combotree("setValues",perm);
+					else{
+						$('#permissions{$suffix}').combotree("setValues",perm);
+						$('#reg{$suffix}').combotree("setValue",permissions[1]);
+					}
+				}
+				if(arr[0]['user_type']==5){
+					$("#permissionsDisplay").show();
+					$("#regDisplay").show();
+				}else{
+					$("#permissionsDisplay").hide();
+					$("#regDisplay").hide();
+				}
+			}else if(_flag==1){
+				$('#name{$suffix}').attr("value","");
+				$("#permissionsDisplay").hide();
+				$("#regDisplay").hide();
+				$('#type{$suffix}').combogrid("setValue",1);
+			}
+			$('#dialog{$suffix}').dialog('open');
+		}else if(_flag==2 || _flag==5){
+			user_id=arr[0].user_id;				
+			if(arr.length!=1){
+				$.messager.show({
+					title: "系统提示", 
+					msg: "请选择一条记录修改"
+				});
+				return;
+			}
+			if(_flag==2 && arr[0].user_delstate=="true"){
+				$.messager.show({
+					title: "系统提示", 
+					msg: "当前记录状态为停用，不能重操作"
+				});
+				return;
+			}
+			if(_flag==5 && arr[0].user_delstate=="false"){
+				$.messager.show({
+					title: "系统提示", 
+					msg: "请先将状态改为停用，再进行恢复"
+				});
+				return;
+			}
+			$.post('__CONTROLLER__/userEdit',{
+				user_id:user_id,flag:_flag
+			},function(result){
+				$.messager.show({
+					title:result.status , 
+					msg:result.message
+				});
+				$('#permissions{$suffix}').combotree("setValues",[]);
+				selector.datagrid('reload');
+			},'json');			
+		}
+	}
+	
+
+
+	$('#type{$suffix}').combogrid({ 
+		panelWidth:150,
+		panelHidth:100,
+		value:'1',
+		idField:'type_id',
+		editable:false,
+		textField:'type_name',
+		url:'__CONTROLLER__/showConType',
+		columns:[[
+			{field:'type_id',title:'编号',width:40},
+			{field:'type_name',title:'排版类型',width:80}
+		]],
+		onChange:function(newValue, oldValue){
+			if(newValue==5){
+				$("#permissionsDisplay").show();
+				$("#regDisplay").show();				
+			}else{
+				$("#permissionsDisplay").hide();
+				$("#regDisplay").hide();
+			}
+		}
+	});
+	
+	$('#permissions{$suffix}').combotree({ 
+		panelWidth:300,
+		panelHidth:150,
+		multiple:true,
+		url:'__CONTROLLER__/showNodeTree'
+	});	
+	
+	$('#reg{$suffix}').combotree({ 
+		panelWidth:150,
+		panelHidth:100,
+		//multiple:true,
+		url:'__CONTROLLER__/showRegTree'
+	});
+
+	function clearData(){
+		$("#name{$suffix}").attr("value","");
+		$('#type{$suffix}').combogrid("setValue",1);
+		$('#permissions{$suffix}').combotree("setValue","");
+		$('#reg{$suffix}').combotree("setValue","");
+	}
+	
+	$("#serchboxs{$suffix}").searchbox({   
+		width:300,   
+		searcher:function(value,name){ 
+			selector.datagrid('load',{name:name,value:value});
+		},   
+		menu:'#mm',   
+		prompt:'请输入查询字段'
+	});	
+</script>

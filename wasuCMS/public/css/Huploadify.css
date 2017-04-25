@@ -1,0 +1,62 @@
+@charset "utf-8";
+/* CSS Document */
+.uploadify-button{
+	display:inline-block;
+	//margin:12px;
+	//border:1px solid #808080;
+	background-color: #368A04;
+	line-height:24px;
+	//border-radius:3px;
+	padding:0 18px;
+    font-size:12px;
+    font-weight: 600;
+    font-family: '微软雅黑';
+	color:#FFF;
+	cursor:pointer;
+	text-decoration:none;
+}
+.uploadify-button:hover{
+	background-color: #FD7904;
+}
+.uploadfile{
+	width:0;
+	}
+.uploadify-queue .uploadify-queue-item{
+	list-style-type:none;
+	margin-top:10px;
+	}
+.uploadbtn,.delfilebtn{
+	display:inline-block;
+	border:1px solid #999;
+	line-height:24px;
+	border-radius:4px;
+	padding:0 18px;
+    font-size:12px;
+	color:#666;
+	cursor:pointer;
+	
+	text-decoration:none;
+	}
+.up_filename,.progressnum,.delfilebtn,.uploadbtn,.up_percent{
+	font-size:12px;
+	color:#666;
+	margin-left:10px;
+	}
+.uploadify-progress{
+	 display:inline-block; 
+	 width:150px; 
+	 height:10px; 
+	 background-color:white;
+	 border-radius:20px;
+	 border:2px groove #666;
+	 vertical-align:middle;
+	 padding:0;
+	 overflow: hidden;
+	 }
+.uploadify-progress-bar{
+	width:0;
+	height:100%;
+	border-radius:20px;
+	background-color: #0099FF;
+	}
+.btn{position: relative;overflow: hidden;margin-right: 4px;display:inline-block;*display:inline;font-size:12px;line-height:18px;*line-height:18px;color:#fff;text-align:center;vertical-align:middle;cursor:pointer;background-color:#5bb75b;border:1px solid #cccccc;border-color:#e6e6e6 #e6e6e6 #bfbfbf;border-bottom-color:#b3b3b3;padding:2px 10px}

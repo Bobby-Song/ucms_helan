@@ -1,0 +1,313 @@
+<table id='dataGrid{$suffix}'></table>
+<div id="toolbar{$suffix}" style="padding:2px 0">
+    <table cellpadding="0" cellspacing="0" style="width:100%">
+        <tr>
+            <td style="padding-left:2px">
+                <if condition="($user_type eq '操作员')">
+                <a href="#" class="easyui-linkbutton" iconCls="icon-add" plain="true" onClick="homeEdits('新增数据',1)">新增</a>
+                <span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-edit" plain="true" onClick="homeEdits('修改数据',3)">修改</a>
+                <span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+                <elseif condition="$user_type eq '内容审核'"/>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-audit" plain="true" onClick="hoemAudits('内容审核','1')">审核</a>
+                <elseif condition="$user_type eq '内容发布'"/>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-release" plain="true" onClick="hoemAudits('内容发布','2')">发布</a>
+                <span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-online" plain="true" onClick="onOrDownLineAudit('on')">上线</a>
+                <span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-downline" plain="true" onClick="onOrDownLineAudit('down')">下线</a>
+                <span class="datagrid-btn-separator" style="vertical-align: middle; height: 15px;display:inline-block;float:none"></span>
+                </if>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-application-form-magnify" plain="true" onClick="homePreviews()">预览</a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="dialog{$suffix}">
+    <table class='browser'>
+
+        <tr id='IsvideoFrame{$suffix}'>
+            <td class='label'>视频框选项</td>
+            <td>
+                <input name="videoFrame{$suffix}" type="radio" value="1" checked="checked" />直播　　<input name="videoFrame{$suffix}" type="radio" value="2" />视频点播　　<input name="videoFrame{$suffix}" type="radio" value="否" />固定地址</td>
+            </td>
+        </tr>
+        <tr id='IsPageLink{$suffix}'>
+            <td class='label' id="showName{$suffix}">链接地址</td>
+            <td>
+                <input type='text' id='pageLink{$suffix}' name='pageLink{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+            </td>
+        </tr>
+        <tr id='IsMovies{$suffix}'>
+            <td class='label'>视频上传</td>
+            <td>
+                <p id = "movies{$suffix}"></p>
+                <p id = "moviesFile{$suffix}"></p>
+            </td>
+        </tr>
+        <tr id='IsPics{$suffix}'>
+            <td class='label'>焦点图上传</td>
+            <td>
+                <p id = "pics{$suffix}"></p>
+                <p id = "ShowImg{$suffix}"></p>
+            </td>
+        </tr>
+        <tr id='IsHtml{$suffix}'>
+            <td class='label'>HTML上传</td>
+            <td>
+                <p id = "html{$suffix}"></p>
+                <p id = "htmlFile{$suffix}"></p>
+            </td>
+        </tr>       
+    </table>
+</div>
+
+<div id="dialogAudit{$suffix}">
+    <table class='browser'>
+        <tr>
+            <td class='label'>类型</td>
+            <td id = 'auditType{$suffix}'></td>
+        </tr>
+        <tr>
+            <td class='label'>SERVICE_ID/滚动字幕/视频描述</td>
+            <td id = 'auditName{$suffix}'></td>
+        </tr>
+        <tr>
+            <td class='label'>安卓频道号/视频文件名</td>
+            <td id = 'auditMovies{$suffix}'></td>
+        </tr>
+        <tr>
+            <td class='label'>驳回原因</td>
+            <td><textarea id="reject{$suffix}" name="reject{$suffix}" class="textarea"></textarea></td>
+        </tr>
+    </table>
+</div>
+
+<script>
+    $(function(){
+        $('#IsvideoFrame{$suffix}').hide();
+        $('#IsPageLink{$suffix}').hide();
+        $('#IsMovies{$suffix}').hide();
+        $('#IsPics{$suffix}').hide();
+        $('#IsHtml{$suffix}').hide();
+    });
+    var gridData = {};
+    indexType( node_type );
+    var selectorDataGrid = $('#dataGrid{$suffix}'); //datagrid 组件选择器
+    var pageSize=18; //datagrid 默认显示行数
+    var toolbar = "#toolbar{$suffix}"; //工具条
+    var dataGridUrl = '__MODULE__/Content/homeEdit?node_id='+node_id+'&node_type='+node_type;
+    var idField = "id";
+    var columns=[[
+        {field:'title',title:'地址 / 文字 / 视频 / 图片',width:150},
+        {field:'edit_time',title:'添加时间',width:50},
+        {field:'region_name',title:'所属区域',width:50},
+        {field:'status',title:'状态',width:50},
+        {field:'back_reason',title:'驳回原因',width:50}
+    ]]; 
+    creatDataGrid( selectorDataGrid , pageSize , toolbar , dataGridUrl , idField , columns );
+    
+    function indexType( _type ){
+        if( _type == 'pageLink' ){
+            $('#IsPageLink{$suffix}').show();
+            $('#IsHtml{$suffix}').show();   
+        }
+    }
+    
+    function homeEdits( _title , _flag ){
+        if( _flag == 1 ){
+            var rows = gridData['rows'];
+            if( rows.length == 1 ){
+                $.messager.show({
+                    title:"系统提示" , 
+                    msg:"数据已存在，请进行修改操作"
+                });                         
+                return;             
+            }   
+        }
+        var dialogSelector = $('#dialog{$suffix}');
+        
+    }
+    
+    function createDiaLog( _selector , _title , _width , _height , _iconCls , _buttons){
+        _selector.dialog({
+            modal : true,
+            title : _title,
+            width : _width,
+            height : _height,
+            iconCls : _iconCls,
+            maximizable : true,
+            closed : true,
+            cache : false,
+            bodyCls : "pass",
+            buttons : _buttons
+        });
+    }
+    /*
+        var id = 0;
+        if( _flag == 1 ){
+            var rows = gridData['rows'];
+            if( rows.length == 1 ){
+                $.messager.show({
+                    title:"系统提示" , 
+                    msg:"数据已存在，请进行修改操作"
+                });                         
+                return;             
+            }
+            changeType( '1' );
+            
+        }else if( _flag == 3 ){
+            var arrs = [];
+            var arrs = $('#datagrid{$suffix}').datagrid('getSelections');
+            if( arrs.length != 1 ){
+                $.messager.show({
+                    title:"系统提示" , 
+                    msg:"请选择一条记录进行修改"
+                });                         
+                return;
+            }
+            changeType( arrs[0]['type'] );
+            id = arrs[0]['id'];
+            $('#type{$suffix}').attr( 'value' , arrs[0]['type'] );
+            if( arrs[0]['type'] == 1 ){
+                $('#service{$suffix}').attr( 'value' , arrs[0]['name'] );
+                $('#channel{$suffix}').attr( 'value' , arrs[0]['movies'] );
+            }else if( arrs[0]['type'] == 2 ){
+                $('#marquee{$suffix}').attr( 'value' , arrs[0]['name'] );
+            }else if( arrs[0]['type'] == 3 ){
+                $('#name{$suffix}').attr( 'value' , arrs[0]['name'] );
+            }
+        }
+        $('#dialog{$suffix}').dialog({
+            modal:true,
+            title:_title,
+            width:580,
+            height:220,
+            iconCls:_flag==1?"icon-add":"icon-edit",
+            maximizable:true,
+            closed:true,
+            cache:false,
+            bodyCls:"pass", 
+            buttons:[
+                {text:'提交',id:'regSubmit',handler:function(){
+                    var type = $('#type{$suffix}').val();
+                    var name = '0';
+                    var movies = '0';
+                    var bool = true;
+                    if( _flag == 1 ){
+                        $.each( gridData['rows'] , function(i,n){
+                            if( n.type == type ){
+                                bool = false;
+                                return;
+                            }
+                        });
+                        if( !bool ){
+                            $.messager.show({
+                                title:"系统提示" , 
+                                msg:"内容已存在，请点击修改"
+                            });                         
+                            return;
+                        }
+                    }
+
+                    if( type == '1' ){
+                        name = $('#service{$suffix}').val();
+                        movies = $('#channel{$suffix}').val();
+                        if( name == '' || movies == '' ){
+                            $.messager.show({
+                                title:"系统提示" , 
+                                msg:"首页电视SERVICE_ID或安卓频道号不能为空"
+                            });                         
+                            return;
+                        }
+                    }else if( type == '2' ){
+                        name = $('#marquee{$suffix}').val();
+                        if( name == '' ){
+                            $.messager.show({
+                                title:"系统提示" , 
+                                msg:"滚动字幕不能为空"
+                            });                         
+                            return;
+                        }
+                    }else if( type == '3' ){
+                        name = $('#name{$suffix}').val();
+                        $.ajax({
+                            url: '{$Think.const.JSON_CACHE_PATH}{$user_id}.htm',
+                            dataType: 'text',
+                            async: false,
+                            success: function(result){
+                                movies = result;
+                            }
+                        });
+                        if( movies == '' ){
+                            if( _flag == 1 ){
+                                if( movies == '' || movies == '0' ){
+                                    $.messager.show({
+                                        title:"系统提示" , 
+                                        msg:"医院首页视频不能为空"
+                                    }); 
+                                    return;
+                                } 
+                            }else if( _flag == 3 ){
+                                movies = arrs[0]['movies'];
+                            }
+                        }
+                        
+                    }
+                    $.post('__CONTROLLER__/homeEdit?flag='+_flag,{id:id , name:name , movies:movies , type:type ,operate_id:{$user_id}},function(result){
+                        $('#datagrid{$suffix}').datagrid('reload');
+                        $('#dialog{$suffix}').dialog('close');
+                        $('#datagrid{$suffix}').datagrid('unselectAll');
+                        $.messager.show({
+                            title:result.status , 
+                            msg:result.message
+                        });
+                    },'json');                  
+                }},
+                {text:'重置',id:'regSubmit',handler:function(){
+                }}
+            ]           
+        });
+
+        $('#dialog{$suffix}').dialog('open');
+    }
+    
+    */
+    
+    // 图片上传插件
+    $('#pics{$suffix}').Huploadify({
+        auto:true,
+        fileTypeExts:'*.jpg;*.gif;*.GIF;*.JPG;*.png;*.PNG',
+        multi:true,
+        uploader:'__CONTROLLER__/picUpload',
+        onUploadSuccess:function(result,file){
+            var data = eval('(' + file + ')');
+            var pic= data.file_name;
+            nums++;
+            var imgs = "<img id='"+nums+"' src='{$Think.const.IMAGE_ABS_PATH}"+pic+"' width='40px' height='40px' style='padding-right:5px' onClick='c("+nums+")' title='点击删除图片' name='"+pic+"' flag='icon'>";
+            $('#ShowImg{$suffix}').append(imgs);
+            pics += pic+'!!';
+        }
+    });
+
+    // 视频上传插件
+
+    $('#movies{$suffix}').Huploadify({
+        auto:false,
+        fileTypeExts:'*.mp4;*.flv',
+        multi:true,
+        fileSizeLimit:99999999,
+        breakPoints:true,
+        saveInfoLocal:true,
+        showUploadedPercent:true,//是否实时显示上传的百分比，如20%
+        showUploadedSize:true,
+        removeTimeout:1,
+        uploader:'__CONTROLLER__/moviesUpLoad',
+        onUploadSuccess:function(result){
+            $('#moviesFile{$suffix}').html( '视频文件名：'+result.name );
+            videos = result.name;
+        }
+    });
+    
+</script>

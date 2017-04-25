@@ -1,0 +1,106 @@
+<table id='regionData{$suffix}'></table>
+<div id="regionMenu{$suffix}" class="easyui-menu" style="width:130px;">
+	<div id='insert{$suffix}' iconCls="icon-add" onclick="regionDataEdit(1)">新增下属区域</div>
+	<div class='menu-sep'></div>
+	<div iconCls="icon-edit" onclick="regionDataEdit(3)">修改本级区域数据</div>
+	<div class='menu-sep'></div>
+	<div iconCls="icon-remove" onclick="regionDataEdit(2)">删除本级区域数据</div>
+</div>
+<div id="regDialog{$suffix}">
+	<table class='browser'>
+		<tr>
+			<td class='label'>区域名称</td>
+			<td>
+				<input type='text' id='text{$suffix}' name='text{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span>
+			</td>
+		</tr>
+	</table>
+</div>
+<script>
+	$('#regionData{$suffix}').treegrid({
+		fit:true,
+		idField:'id',//数据表格要有主键	
+		treeField:'text',//treegrid 树形结构主键 text
+		animate:true,//动画效果
+		fitColumns:true,//自动扩大或缩小列的尺寸以适应表格的宽度并且防止水平滚动
+		rownumbers:false,//显示行号的列
+		url:'__MODULE__/Region/showRerionGridTree',	
+		columns:[[
+			{field:'text',title:'区域名称　[请右键点击节点进行操作管理]',width:200} ,
+			{field:'id',title:'区域ID',width:120} ,
+			{field:'code',title:'区域编码',width:120} 
+		]],
+		onContextMenu: function(e,row){
+			e.preventDefault();					//屏蔽浏览器的菜单
+			$(this).treegrid('unselectAll');	//清除所有选中项
+			$(this).treegrid('select', row.id);//选中状态
+			var level = row.level;
+			if( level == 4 ) $('#insert{$suffix}').hide();
+			else $('#insert{$suffix}').show();
+			$('#regionMenu{$suffix}').menu('show', {
+				left: e.pageX,
+				top: e.pageY
+			});
+		}
+	});
+	
+	function regionDataEdit( _flag ){
+		$('#text{$suffix}').attr( 'value' , '' );
+		var gridNode = $('#regionData{$suffix}').treegrid('getSelected');
+		if( _flag == 1 || _flag == 3 ){
+			var selector = $('#regDialog{$suffix}');
+			_flag == 3 ? $('#text{$suffix}').attr( 'value' , gridNode.text ) : $('#text{$suffix}').attr( 'value' , '' );
+			var title = _flag == 1 ? "新增" + gridNode.text + "所属区域" : "修改" + gridNode.text + "信息";
+			var width = 480;
+			var height = 100;
+			var iconCls = _flag == 1 ? "icon-add" : "icon-edit";
+			var buttons =[
+				{text:'提交',id:'regSubmit',handler:function(){
+					if( $('#text{$suffix}').val() == '' ){
+						$.messager.show({
+							title: "系统提示", 
+							msg: "区域名称不能为空"
+						});
+						return;
+					}
+					var controller = '__MODULE__/Region/editRerionGridTree';
+					var data = { id : gridNode.id , flag : _flag , text : $('#text{$suffix}').val() };
+					sendData( controller , data );
+					selector.dialog('close');
+				}},
+				{text:'重置',id:'regSet',handler:function(){
+					$('#text{$suffix}').attr( 'value' , '' );
+				}}
+			];
+			createDiaLog( selector , title , width , height , iconCls , buttons);
+			selector.dialog('open');
+		}else if( _flag == 2 ){
+			var controller = '__MODULE__/Region/editRerionGridTree';
+			var data = { id : gridNode.id , flag : _flag };
+			$.messager.confirm('系统提示','您真的要删除'+gridNode.text+'及所属区域记录吗，删除后数据不可恢复！',function(b){
+				if( b ){
+					sendData( controller , data );
+				}
+			});
+		}
+	}
+	
+	function sendData( _controller , _data ){
+		$.post( _controller , _data , function(result){	
+			$.messager.show({
+				title:result.title , 
+				msg:result.message
+			});
+			if( result.error == 0 ){
+				if ( _data.flag == 1 ){				
+					$('#regionData{$suffix}').treegrid( 'reload');
+					$('#regionData{$suffix}').treegrid( 'expandTo' , _data.id );
+					
+				}else if ( _data.flag == 2 || _data.flag == 3){
+					var arr = $('#regionData{$suffix}').treegrid( 'getParent' , _data.id );
+					$('#regionData{$suffix}').treegrid( 'reload' , arr.id );
+				}
+			}
+		},'json');	
+	}
+</script>

@@ -1,0 +1,104 @@
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+    <title>电视端平台CMS管理系统</title>
+    <script type="text/javascript" src="{$Think.const.CF_PATH}jquery-1.7.2.min.js" charset="utf-8"></script>
+    <link rel="stylesheet" type="text/css" href="{$Think.const.CF_PATH}themes/default_bak/easyui.css">
+	<link rel="stylesheet" type="text/css" href="{$Think.const.CF_PATH}themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="{$Think.const.CSS_PATH}mycss.css">
+	<link rel="stylesheet" type="text/css" href="{$Think.const.CSS_PATH}Huploadify.css">
+	<script type="text/javascript" src="{$Think.const.CF_PATH}jquery.easyui.min.js" charset="utf-8"></script>
+	<script type="text/javascript" src="{$Think.const.CF_PATH}locale/easyui-lang-zh_CN.js" charset="utf-8"></script>
+	<script type="text/javascript" src="{$Think.const.HIGHCHARTS_PATH}js/highcharts.js" charset="utf-8"></script>
+	<script type="text/javascript" src="{$Think.const.JS_PATH}common.js" charset="utf-8"></script>
+	<script type="text/javascript" src="{$Think.const.JS_PATH}root.js" charset="utf-8"></script>
+	<script src="{$Think.const.EDITOR_URL}kindeditor-all-min.js"></script>
+    <script src="{$Think.const.EDITOR_URL}lang/zh-CN.js"></script>
+	<script type="text/javascript" src="{$Think.const.JS_PATH}jquery.Huploadify.js" charset="utf-8"></script>
+	
+	<script>
+		var region_id = '{$region_id}';
+		var rid = '{$region_id}';
+		var user_id = '{$user_id}';
+		var level = '{$level}';
+		var nodes = '{$nodes}';
+		var code = '{$code}';
+		var code_name = '{$code_name}';
+		var code_level = '{$code_level}';
+		$(function(){
+			$('#Loadings').hide();
+			var href='__CONTROLLER__/console';
+			$('#tree_tabs').tabs({
+				fit:true,
+				tools:[{
+					text:"更改密码",iconCls:"icon-lock",handler:function(){
+						changePw( '__MODULE__/User/changePassWord' , '__CONTROLLER__/exitSystem' , $('#dialogs{$suffix}') , 1 );
+					}
+				},{
+					text:"退出系统",iconCls:"icon-exit",handler:function(){
+						location.href = '__CONTROLLER__/exitSystem';
+					}					
+				}]
+			});
+			$('#tree_tabs').tabs('add',{
+				title:'桌面',
+				href: href,
+				cache:false,
+				bodyCls:"pass"
+			});
+		});
+		var json_cache_path = "{$Think.const.JSON_CACHE_PATH}";
+		var node_data = ajaxPage( region_id+'_node' );
+		var module = '__MODULE__/';
+		function closes(){
+			$("#Loading").fadeOut("normal",function(){
+				$(this).hide();
+			});
+		}
+		var pc;
+		$.parser.onComplete = function(){
+			if( pc ) clearTimeout( pc );
+			pc = setTimeout( closes, 1000 );
+		}
+	</script>
+</head>
+<body class="easyui-layout" style="background:#EDF9FE" onLoad="buildRegionTree( module )">
+	<div id='Loading'>
+		<table>
+			<tr>
+				<td><img src='{$Think.const.IMAGES_PATH}loading2.gif'/></td>
+				<td id='showStatus'>请稍候，远程数据载入中···</td>
+			</tr>
+		</table>
+	</div>
+	
+	<div id='Loadings'>
+		<table>
+			<tr>
+				<td><img src='{$Think.const.IMAGES_PATH}loading2.gif'/></td>
+				<td id='showStatus'>请稍候，远程数据生成中···</td>
+			</tr>
+		</table>
+	</div>
+	
+	<div region="north" border="false" id="norths" style="overflow:hidden;height:50px;background:#1AACE4">
+		<div id="logo"></div>
+		<div id="header"></div>
+	</div>
+	<div id="showLayer" region="center" border="false" style="padding:3px 3px 0px 3px;background:#EDF9FE">
+		<div class="easyui-panel" fit=true border=false>
+			<div class="easyui-layout" fit=true>
+				<div region="west" border="true" title="主菜单" style="width:220px;padding:3px;" id="menu">
+					<ul id='tree'></ul> 
+				</div>
+				<div region="center" border="false" style="padding:0px;padding-left:3px;background:#EDF9FE">
+					<div id="tree_tabs">				
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div region="south" border="false" style="overflow: hidden;height:30px;text-align:center;background:#EDF9FE">
+	</div>
+</body>
+</html>

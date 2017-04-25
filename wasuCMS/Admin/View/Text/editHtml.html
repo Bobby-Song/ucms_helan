@@ -1,0 +1,184 @@
+<div class="easyui-panel" fit=true border=false>
+	<div class="easyui-layout" fit=true>
+		<div region='center' border=false>
+			<div class='easyui-panel' fit=true style="padding:3px;">
+				<table class='browser'>
+					<tr>
+						<td class='sidebar' colspan="2">基本信息</td>
+					</tr>
+					<tr>
+						<td class='label'>标题</td>
+						<td><input type='text' id='title{$suffix}' name='title{$suffix}' class='myInp'>&nbsp;&nbsp;<span style='color:red'>*</span></td>
+						
+					</tr>					
+					<tr>
+						<td class='label'>条目缩略图</td>
+						<td>
+							<p id = "pics{$suffix}"></p>
+							<p id = "ShowImg{$suffix}"></p>
+						</td>
+					</tr>
+					<tr>
+						<td class='label'>视频链接</td>
+						<td>
+							<input type='text' id='video_lnk{$suffix}' name='video_lnk{$suffix}' class='myInp'>
+						</td>
+						
+					</tr>						
+					<tr>
+						<td class='label'>视频上传</td>
+						<td>
+							<p id = "movies{$suffix}"></p>
+							<p id = "moviesFile{$suffix}"></p>
+						</td>
+					</tr>					
+					<tr>
+						<td class='label'>内容或介绍</td>
+						<td><textarea name="txtContent{$suffix}" id="txtContent{$suffix}" style="width: 100%; height:300px; visibility: hidden;"></textarea></td>
+					</tr>
+
+				</table>
+			</div>
+		</div>
+		<div region="south" border="false" style="overflow: hidden;height:35px;text-align:center;line-height:35px;margin-top:3px;background:#F2F2F2">
+			<a href="#" class="easyui-linkbutton" id="submits">提交</a>
+			<a href="#" class="easyui-linkbutton" id="resets">重置</a>
+		</div>
+	</div>
+</div>
+<script>
+
+var picUploadController = '__CONTROLLER__/picUpload';
+var moviesUploadController = '__CONTROLLER__/moviesUpLoad';
+
+
+var selectorShowImg = $('#ShowImg{$suffix}');
+
+var videos = '';
+var pics = '';
+var editId = 0;
+var nums = 0;
+var id;
+var urls="{$Think.const.IMAGE_ABS_PATH}";
+$(function(){
+	$.parser.onComplete = function(){
+		editor = KindEditor.create('textarea[name="txtContent{$suffix}"]', {
+			//allowFileManager: true,
+			resizeType: 1,
+			allowPreviewEmoticons: false,
+			uploadJson : '__MODULE__/Text/uploadJson?url='+urls,
+			//fileManagerJson : '../php/file_manager_json.php',
+			//fileManagerJson : '__MODULE__/Text/managerJson?url='+urls,
+			items: [
+			'fontname', 'fontsize', '|', 'forecolor', 'hilitecolor', 'bold', 'italic', 'underline',
+			'removeformat', '|', 'justifyleft', 'justifycenter', 'justifyright', 'insertorderedlist',
+			'insertunorderedlist', '|', 'image'],
+			//allowImageRemote:false,
+			allowFileManager : false,
+			pasteType:2,
+			afterCreate : function(){
+				this.sync(); 
+			},
+			afterBlur:function(){
+				this.sync();
+			}   
+		});	
+		$('.ke-edit').css('height', '90%');
+	}
+	if( editsFlag == 3 ){
+		var nu = 100;
+		var len = '';
+		$('#title{$suffix}').attr( 'value' , data_arr[0].title );
+		$('#txtContent{$suffix}').html( data_arr[0].content );
+		$('#video_lnk{$suffix}').attr( 'value' , data_arr[0].video_lnk );
+		pics = data_arr[0].pics;
+		var pics_arr = pics.split("!!");
+		if( pics_arr.length > 1){
+			pics_arr.pop();
+			if( pics_arr.length == 1 ){
+				len = "<img id='"+nu+"' src='{$Think.const.IMAGE_ABS_PATH}"+pics_arr[0]+"' width='40px' height='40px' style='padding-right:5px' onClick='c("+nu+")' title='点击删除图片' name='"+pics_arr[0]+"' flag='icon'>";
+			}else{
+				$.each(pics_arr,function(i,n){
+					len += "<img id='"+nu+"' src='{$Think.const.IMAGE_ABS_PATH}"+pics_arr[i]+"' ";
+					len += "width='40px' height='40px' ";
+					len += "style='padding-right:5px' onClick='c("+nu+")' title='点击删除图片' ";
+					len += "name='"+pics_arr[i]+"' flag='icon'>";
+					nu++;
+				});
+			}
+		}
+		$('#ShowImg{$suffix}').html(len);
+		$('#moviesFile{$suffix}').html( data_arr[0].videos );
+		id = data_arr[0].id;
+	}else if( editsFlag == 1 ){
+		id = 0;
+	}
+	$("#submits").bind('click', dataValidation);
+});
+
+//数据验证
+function dataValidation(){
+	var editController = '__MODULE__/Text/editData?flag='+editsFlag;
+	var content = editor.html();
+	var title = $('#title{$suffix}').val();
+	var video_lnk = $('#video_lnk{$suffix}').val();
+	var editData = {
+		id : id ,
+		content : content ,
+		title : title , 
+		video_lnk : video_lnk , 
+		node_id : nodeId , 
+		videos : videos , 
+		pics : pics ,
+		
+	};
+	if( title == '' || ( content == '' && videos == '' && video_lnk == '' ) ){
+		$.messager.show({
+			title:"系统提示" , 
+			msg:"标题为空或内容与视频不能同时为空"
+		});	
+		return;
+	}
+	sendContent( editController , editData );
+}
+// 图片上传插件
+$('#pics{$suffix}').Huploadify({
+	auto:true,
+	fileTypeExts:'*.jpg;*.gif;*.GIF;*.JPG;*.png;*.PNG',
+	multi:true,
+	uploader:'__CONTROLLER__/picUpload',
+	onUploadSuccess:function(result,file){
+		var data = eval('(' + file + ')');
+		var pic= data.file_name;
+		nums++;
+		var imgs = "<img id='"+nums+"' src='{$Think.const.IMAGE_ABS_PATH}"+pic+"' width='40px' height='40px' style='padding-right:5px' onClick='c("+nums+")' title='点击删除图片' name='"+pic+"' flag='icon'>";
+		$('#ShowImg{$suffix}').append(imgs);
+		pics += pic+'!!';
+	}
+});
+
+// 视频上传插件
+
+$('#movies{$suffix}').Huploadify({
+	auto:false,
+	fileTypeExts:'*.mp4;*.flv',
+	multi:true,
+	fileSizeLimit:99999999,
+	breakPoints:true,
+	saveInfoLocal:true,
+	showUploadedPercent:true,//是否实时显示上传的百分比，如20%
+	showUploadedSize:true,
+	removeTimeout:1,
+	uploader:'__CONTROLLER__/moviesUpLoad',
+	onUploadSuccess:function(result){
+		$('#moviesFile{$suffix}').html( '视频文件名：'+result.name );
+		videos = result.name;
+	}
+});
+
+function c(_id){
+	var name = $('#'+_id).attr('name');
+	pics = pics.replace(new RegExp(name+'!!'),"");
+	$('#'+_id).remove();
+}
+</script>

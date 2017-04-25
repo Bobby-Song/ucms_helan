@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>SearchBox - jQuery EasyUI Demo</title>
+	<link rel="stylesheet" type="text/css" href="../themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="../themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="demo.css">
+	<script type="text/javascript" src="../jquery-1.7.2.min.js"></script>
+	<script type="text/javascript" src="../jquery.easyui.min.js"></script>
+	<script>
+
+	</script>
+</head>
+<body>
+	<h2>SearchBox</h2>
+	<div class="demo-info" style="margin-bottom:10px">
+		<div class="demo-tip icon-tip"></div>
+		<div>Click search button or press enter key in input box to do searching.</div>
+	</div>
+	
+	<!--input id="ss" class="easyui-searchbox" searcher="qq" prompt="Please Input Value" menu="#mm" style="width:300px"></input-->
+	<input id="ss"></input>		
+	<div id="mm" style="width:120px">
+		<div name="time" iconCls="icon-ok">All News</div>
+		<div name="sports">Sports News</div>
+	</div>
+	<script>
+		$('#ss').searchbox({   
+			width:200,   
+			searcher:function(value,name){   
+				alert(value + "," + name)   
+			},   
+			menu:'#mm',   
+			prompt:'请输入查询字段'
+		});
+		
+	</script>
+</body>
+</html>
